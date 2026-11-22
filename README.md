@@ -1,26 +1,58 @@
 # AURA
 
-AURA é um tema e uma extensão para o Spotify desktop no Windows. A janela normal reúne a navegação em uma ilha, três painéis e um player flutuante. O modo imersivo tem o disco com a capa, letras e controles próprios.
+**Tema e extensão para o Spotify desktop no Windows.** AURA coloca a biblioteca, a navegação e a reprodução em painéis flutuantes. O modo imersivo leva a capa para um vinil que gira junto com a música.
 
-## Compatibilidade
+[Demonstração](#demonstração) · [Instalação](#instalação) · [Como usar](#como-usar) · [Desenvolvimento](#desenvolvimento)
 
-O AURA foi aplicado ao Spotify desktop **1.3.9.2055** no Windows com o Spicetify **2.46.7**. Essa versão do Spicetify declara suporte ao Spotify para Windows até **1.3.9**. Confira a compatibilidade da sua instalação antes de aplicar. [Notas oficiais de compatibilidade](https://github.com/spicetify/cli/releases/tag/v2.46.7)
+## Demonstração
 
-O AURA usa a API do Spicetify v2 e pode ser copiado diretamente para a instalação. O Node é necessário para rodar as verificações de desenvolvimento. [Desenvolvimento de extensões](https://spicetify.app/docs/development/extensions)
+[![Modo imersivo do AURA com disco, fila de reprodução e player flutuante](docs/media/aura-imersivo.jpg)](docs/media/aura-demo.mp4)
 
-## Ativar o AURA
+[Assistir à gravação original · 53 s](docs/media/aura-demo.mp4)
 
-Em uma instalação compatível, instale o Spicetify pelo guia oficial se ele ainda estiver ausente. A instalação via WinGet é uma das opções documentadas. Depois de instalar, reabra o PowerShell. [Instalação no Windows](https://spicetify.app/docs/getting-started#windows)
+## Recursos
 
-**PowerShell · instalar o Spicetify com WinGet**
+### Janela do Spotify
+
+![Janela normal do Spotify com navegação em ilha, três painéis e player flutuante](docs/media/aura-paineis.jpg)
+
+- **Três painéis em perspectiva** para biblioteca, conteúdo e faixa atual, com uma ilha de navegação e um player flutuante.
+- **Iluminação por álbum** nas bordas, na ilha e no player. A cor acompanha a faixa em reprodução, inclusive com um papel de parede personalizado.
+- **Animações de navegação** em páginas, menus, cards e controles. Ao iniciar uma faixa, a miniatura viaja até o painel de reprodução. Ao abrir um álbum, a capa cresce até o cabeçalho e retorna ao card de origem se ele estiver visível.
+- **Dois fundos.** Papel de parede usa a imagem escolhida no AURA ou a capa do álbum. Desktop ao vivo revela a área de trabalho e os outros apps nos espaços entre os painéis.
+
+### Modo imersivo
+
+- **Vinil com a capa inteira**, fundo configurável, relógio opcional e controles de reprodução, volume, posição na faixa, aleatório, repetição e curtidas.
+- **Fila rolável** com as faixas adicionadas manualmente acima das próximas faixas do álbum ou da playlist. A fila acompanha o Spotify durante a pausa.
+- **Letras no painel lateral ou abaixo do vinil**, com indicação de sincronização por palavra, por linha ou texto simples, conforme a faixa. [LRCLIB](https://lrclib.net/docs)
+- **Ajustes persistentes** de cor, fundo, atalho, escurecimento, tamanho do disco e profundidade. **Reduzir movimento** também vale para a janela normal.
+
+## Instalação
+
+### Versões testadas
+
+| Componente | Versão ou uso |
+| --- | --- |
+| Spotify para Windows | **1.3.9.2055**, do instalador desktop |
+| Spicetify | **2.46.7** |
+| Python 3 | Opcional, para **Desktop ao vivo**. O auxiliar usa o iniciador `py.exe`. |
+| Node.js | Opcional, para rodar as verificações do código. |
+
+As notas do Spicetify 2.46.7 declaram compatibilidade com o Spotify para Windows até a série **1.3.9**. Confira as versões antes de aplicar o tema. [Notas oficiais do Spicetify](https://github.com/spicetify/cli/releases/tag/v2.46.7)
+
+### 1. Preparar o Spotify e baixar o AURA
+
+Abra o Spotify e entre com sua conta. Instale o Spicetify pelo guia oficial e reabra o PowerShell para reconhecer o comando. [Instalação do Spicetify no Windows](https://spicetify.app/docs/getting-started#windows)
+
+[Baixe o ZIP do AURA](https://github.com/GiulioFreitaS/aura-spotify/archive/refs/heads/main.zip) e extraia a pasta, ou clone o repositório.
 
 ```powershell
-winget install --id Spicetify.Spicetify --exact
+git clone https://github.com/GiulioFreitaS/aura-spotify.git
+Set-Location .\aura-spotify
 ```
 
-**PowerShell · primeira execução do Spicetify**
-
-Em uma instalação nova, abra o Spotify e entre na sua conta antes de gerar a configuração e fazer o backup inicial do cliente. As instalações que já usam Spicetify normalmente têm esse backup. [Comandos do Spicetify](https://spicetify.app/docs/cli/commands)
+Abra o PowerShell na pasta que contém `README.md`, `Themes` e `Extensions`. Gere a configuração com `spicetify`. Em uma instalação nova, faça o backup inicial do Spotify original. Se já usa Spicetify, use o backup existente. [Comandos do Spicetify](https://spicetify.app/docs/cli/commands)
 
 ```powershell
 spicetify --version
@@ -28,134 +60,110 @@ spicetify
 spicetify backup
 ```
 
-**PowerShell · copiar e ativar o AURA**
+### 2. Ativar o AURA
 
-Execute na raiz deste projeto. O bloco guarda o `config-xpui.ini` em um arquivo datado no diretório temporário e evita sobrescrever uma cópia do AURA que já esteja no destino. Guarde o caminho impresso para desfazer a ativação.
+Execute o bloco na pasta do projeto. Ele guarda a configuração anterior em um arquivo datado. Anote o caminho exibido para poder restaurá-la.
 
 ```powershell
 $auraData = (spicetify path userdata).Trim()
 $auraConfig = (spicetify -c).Trim()
+
 if (!(Test-Path -LiteralPath $auraConfig -PathType Leaf)) {
     throw 'Execute spicetify para gerar config-xpui.ini antes de continuar.'
 }
 
-$auraThemes = Join-Path $auraData 'Themes'
-$auraExtensions = Join-Path $auraData 'Extensions'
-$auraTheme = Join-Path $auraThemes 'AURA'
-$auraExtension = Join-Path $auraExtensions 'aura.js'
-$auraModules = Join-Path $auraExtensions 'node_modules'
-$auraLyrics = Join-Path $auraModules 'aura-lyrics'
-$auraNative = Join-Path $auraModules 'aura-native'
-if ((Test-Path -LiteralPath $auraTheme) -or (Test-Path -LiteralPath $auraExtension) -or
-    (Test-Path -LiteralPath $auraLyrics) -or (Test-Path -LiteralPath $auraNative)) {
-    throw 'Já existe uma cópia do AURA no destino. Guarde os arquivos existentes antes de substituí-los.'
+$auraFiles = [ordered]@{
+    '.\Themes\AURA'            = 'Themes\AURA'
+    '.\Extensions\aura.js'     = 'Extensions\aura.js'
+    '.\Extensions\aura-lyrics' = 'Extensions\node_modules\aura-lyrics'
+    '.\Extensions\aura-native' = 'Extensions\node_modules\aura-native'
 }
 
-$auraBackup = Join-Path ([IO.Path]::GetTempPath()) ("AURA-config-" + (Get-Date -Format 'yyyyMMdd-HHmmssfff') + ".ini")
+foreach ($auraRelativePath in $auraFiles.Values) {
+    $auraTarget = Join-Path $auraData $auraRelativePath
+    if (Test-Path -LiteralPath $auraTarget) {
+        throw 'Já existe uma instalação do AURA. Consulte a seção Atualizar.'
+    }
+}
+
+$auraBackupName = 'AURA-config-' + (Get-Date -Format 'yyyyMMdd-HHmmssfff') + '.ini'
+$auraBackup = Join-Path ([IO.Path]::GetTempPath()) $auraBackupName
 Copy-Item -LiteralPath $auraConfig -Destination $auraBackup -ErrorAction Stop
-Write-Output $auraBackup
+Write-Output "Backup da configuração em $auraBackup"
 
-New-Item -ItemType Directory -Force -Path $auraThemes, $auraModules -ErrorAction Stop | Out-Null
-Copy-Item -LiteralPath '.\Themes\AURA' -Destination $auraTheme -Recurse -ErrorAction Stop
-Copy-Item -LiteralPath '.\Extensions\aura.js' -Destination $auraExtension -ErrorAction Stop
-Copy-Item -LiteralPath '.\Extensions\aura-lyrics' -Destination $auraLyrics -Recurse -ErrorAction Stop
-Copy-Item -LiteralPath '.\Extensions\aura-native' -Destination $auraNative -Recurse -ErrorAction Stop
+foreach ($auraFile in $auraFiles.GetEnumerator()) {
+    $auraTarget = Join-Path $auraData $auraFile.Value
+    $auraParent = Split-Path -Parent $auraTarget
+    New-Item -ItemType Directory -Path $auraParent -Force -ErrorAction Stop | Out-Null
+    Copy-Item -LiteralPath $auraFile.Key -Destination $auraTarget -Recurse -ErrorAction Stop
+}
 
-spicetify config extensions 'aura.js'
-if ($LASTEXITCODE -ne 0) { throw 'Não foi possível ativar a extensão AURA.' }
+spicetify config extensions aura.js
+if ($LASTEXITCODE -ne 0) { throw 'Falha ao ativar a extensão AURA.' }
+
 spicetify config current_theme AURA color_scheme Vinil inject_css 1 replace_colors 1 expose_apis 1
-if ($LASTEXITCODE -ne 0) { throw 'Não foi possível selecionar o tema AURA.' }
+if ($LASTEXITCODE -ne 0) { throw 'Falha ao selecionar o tema AURA.' }
+
 spicetify apply
+if ($LASTEXITCODE -ne 0) { throw 'Falha ao aplicar o AURA ao Spotify.' }
 ```
 
-O botão **AURA · Modo imersivo** tem ícone de disco e fica nos controles à direita da barra de reprodução. Se a barra não aceitar o botão, procure **AURA · Modo imersivo** no menu do perfil. O atalho inicial é **Ctrl + Alt + A**, com o Alt esquerdo no teclado ABNT2. [Temas](https://spicetify.app/docs/customization/themes) · [Extensões](https://spicetify.app/docs/customization/extensions)
+### 3. Ativar o recorte da janela (opcional)
 
-Para atualizar, guarde cópias de `aura.js`, `Themes/AURA/user.css` e dos módulos já instalados. Atualize esses arquivos e copie os módulos `aura-lyrics` e `aura-native` para `Extensions/node_modules` na pasta de configuração do Spicetify. Preserve o `bridge-config.mjs` gerado dentro de `aura-native`, se existir. Execute `spicetify apply` para disponibilizar os arquivos ao Spotify. [Módulos do Spicetify](https://spicetify.app/docs/development/js-modules)
-
-## Painéis na janela normal
-
-O ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no perfil alterna o layout normal. A biblioteca usa a lista do Spotify, com os filtros **Playlists** e **Álbuns**. Páginas e menus entram suavemente, e capas e botões reagem ao mouse e ao foco. Ao iniciar uma nova faixa a partir de um clique, a miniatura da capa percorre a tela até o painel direito ou o player, com uma onda na chegada. **Reduzir movimento** nos ajustes do AURA também vale para a janela normal.
-
-A cor da faixa em reprodução ilumina as bordas dos painéis, a ilha de navegação e o player. Se você escolher uma cor manual em **Ajustes → Cor de destaque**, ela também ilumina a janela normal. Ao abrir um álbum pelo card, a capa cresce até o cabeçalho e volta ao card visível quando você retorna à página anterior.
-
-Escolha **AURA · Papel de parede** no menu do perfil para alternar o fundo da janela normal. As mesmas opções estão em **Modo imersivo → Ajustes → Janela normal do Spotify → Fundo da janela**. **Papel de parede** mostra a imagem do AURA ou a capa do álbum atrás dos painéis. **Desktop ao vivo** revela os apps e o desktop nos vãos.
-
-O auxiliar usa Python 3 pelo iniciador `py.exe`. No Spotify 1.3.9.2055 do instalador desktop, ele arredonda as áreas dos controles nativos e conserva o recorte durante **Alt + Tab**. O modo imersivo e as janelas estreitas usam a janela completa. Com o auxiliar desligado, os vãos mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
-
-**PowerShell · abrir o Spotify e iniciar o recorte**
+Instale Python 3 com o iniciador `py.exe` se quiser ver o desktop nos vãos. Feche o Spotify e execute o iniciador na pasta do AURA para abrir o cliente e o auxiliar local.
 
 ```powershell
 .\Windows\Iniciar-AURA.ps1
 ```
 
-Se o Spotify já estava aberto na primeira ativação do auxiliar, feche e abra o Spotify uma vez para carregar a configuração local. Pare o auxiliar para restaurar a janela completa.
+Escolha **Ajustes → Janela normal do Spotify → Fundo da janela → Desktop ao vivo** no modo imersivo. Com o auxiliar desligado, os espaços entre os painéis mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
 
-**PowerShell · parar o auxiliar e restaurar a janela**
+## Como usar
 
-```powershell
-.\Windows\Iniciar-AURA.ps1 -Parar
-```
+| Ação | Onde encontrar |
+| --- | --- |
+| Abrir o modo imersivo | **Ctrl + Alt + A** ou botão com ícone de disco no player. O menu do perfil também pode oferecer **AURA · Modo imersivo**. |
+| Voltar ao Spotify | **Esc** ou **Sair**. Nos ajustes, o primeiro **Esc** volta ao modo imersivo. |
+| Alternar o layout em painéis | Ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no perfil. |
+| Mudar o fundo | **Ajustes** no modo imersivo. É possível escolher uma imagem ou voltar a usar a capa do álbum. |
+| Mostrar letras | **Letras** no menu lateral. Use **Ajustes → Letras** para mudar a posição ou corrigir a sincronia. |
+| Reduzir as animações | **Ajustes → Reduzir movimento**. As preferências de movimento do Windows também são respeitadas. |
 
-## HUD e ajustes
+O AURA consulta o LRCLIB ao exibir letras, usando título, artista, álbum e duração. A posição da música controla o destaque quando o resultado tem marcações de tempo. O atraso manual aceita até cinco segundos em cada direção. [Formato Lyricsfile](https://github.com/tranxuanthang/lyricsfile/blob/main/SPECIFICATION.md)
 
-O painel da direita mostra as faixas adicionadas manualmente acima da sequência do álbum ou da playlist. A lista pode ser rolada e acompanha a fila do Spotify mesmo com a reprodução pausada. A barra flutuante controla a reprodução, a posição na faixa, o volume, o modo aleatório, a repetição e as curtidas. Os controles ficam visíveis por padrão. Ative **Recolher controles** em **Ajustes** para ocultar a barra durante a reprodução após alguns segundos sem interação.
+## Atualizar
 
-Em **Ajustes**, escolha o fundo, o escurecimento e a cor de destaque. A cor automática vem dos pixels da capa. A composição tem ajustes de tamanho do disco, profundidade 3D, brilho decorativo, relógio e fila. Janelas estreitas empilham os painéis. A opção **Reduzir movimento** pausa a animação do disco e do brilho e retira o movimento com o mouse. **Restaurar visual do AURA** mantém a imagem local, o atalho e o atraso das letras.
-
-## Letras
-
-Abra **Letras** na navegação do AURA. Escolha o painel lateral ou a posição abaixo do disco em **Ajustes → Letras**. Enquanto esse painel estiver aberto, a extensão consulta o LRCLIB com o título, o artista principal, o álbum e a duração da faixa. A fonte aparece junto da letra. [API do LRCLIB](https://lrclib.net/docs)
-
-A indicação **Por linha**, **Por palavra** ou **Sem sincronização** acompanha o formato retornado. A extensão confere título, artista e duração antes de exibir a letra. Uma indicação separada identifica instrumentais e resultados indisponíveis. Se a rede falhar, **Tentar novamente** fica disponível depois da espera. [Formato Lyricsfile](https://lrclib.net/lyricsfile)
-
-Em **Ajustes → Letras**, um atraso positivo faz a letra aparecer mais tarde. Um valor negativo adianta a letra, e **Zerar** restaura a sincronização original. O ajuste é mantido ao reiniciar.
-
-## O que testar com o Spotify aberto
-
-1. Toque uma música e abra o AURA pelo botão. Confira o título, o artista, o álbum e a capa com a faixa que realmente está tocando.
-2. Pause e retome, primeiro no AURA e depois pelo teclado multimídia ou pelo Spotify. Confira que o disco congela no mesmo ângulo ao pausar. Avance e volte uma faixa e confira a atualização dos dados, da fila e do fundo. Ative **Recolher controles**, aguarde cerca de quatro segundos em reprodução e mova o mouse para trazer a barra de volta.
-3. Clique e arraste na linha do tempo. Confira se a reprodução passa para a posição escolhida e se o tempo continua avançando. Ajuste o volume e confirme no player nativo depois de sair. Use Tab e as setas para repetir o teste com teclado.
-4. Abra **Ajustes**, mude o atalho e escolha uma imagem JPG, PNG, WebP, AVIF ou BMP de até 18 MiB. Reinicie o Spotify e confira se a imagem e o novo atalho foram mantidos. Use **Usar capa do álbum** para voltar ao fundo automático. Esc volta dos ajustes para o modo imersivo e um segundo Esc retorna ao Spotify.
-5. Digite uma busca no painel esquerdo e confirme com Enter. A busca abre o resultado no Spotify. Teste **Biblioteca**, que leva à barra lateral ou a **Músicas curtidas**, e o atalho direto **Músicas curtidas**.
-6. Redimensione a janela e repita com a escala do Windows em 125% ou 150%. Confira se a fonte, o disco, a linha do tempo e o botão Sair continuam alcançáveis. Repita com uma faixa de nome longo e com uma faixa sem capa.
-7. Abra **Letras** em uma faixa com sincronização. Avance e volte pela linha do tempo e confira se o destaque acompanha a posição. Troque de faixa com o painel aberto e confira que a letra muda junto.
-8. Ajuste o atraso para `+1000 ms` e depois `-1000 ms`. Confira o atraso, o adiantamento e a persistência após reiniciar. Confira também uma faixa instrumental ou sem dados e a recuperação após uma falha de rede.
-9. Com a reprodução pausada, adicione uma faixa à fila pelo Spotify. Abra o modo imersivo e confira a faixa em **Adicionadas à fila**, acima de **Em seguida**. Confira também o relógio e os botões de aleatório, repetição, curtir e silenciar.
-10. Navegue por páginas e menus, inicie outra faixa e confira a chegada da capa ao painel direito ou ao player. Ative **Reduzir movimento** e confira o disco parado e a navegação sem as animações do AURA.
-11. Abra um álbum a partir de um card visível e volte pelo botão da ilha. Confira o percurso da capa nas duas direções. Troque de álbum em reprodução e confira a mudança de cor dos painéis em **Papel de parede** e **Desktop ao vivo**.
+Guarde uma cópia dos arquivos atuais e atualize `Themes\AURA\user.css`, `Extensions\aura.js` e os módulos `aura-lyrics` e `aura-native` em `Extensions\node_modules` na pasta de dados do Spicetify. Preserve o `bridge-config.mjs` criado pelo auxiliar, se existir. Rode `spicetify apply` para carregar a atualização. [Módulos JavaScript do Spicetify](https://spicetify.app/docs/development/js-modules)
 
 ## Voltar à configuração anterior
 
-No mesmo PowerShell da ativação, `$auraBackup` ainda aponta para a cópia datada. Se reabriu o terminal, atribua à variável o caminho exibido na ativação.
-
-**PowerShell · restaurar o arquivo de configuração**
+Se usar o auxiliar da janela, pare-o antes de restaurar. Em outra sessão do PowerShell, atribua a `$auraBackup` o caminho guardado na instalação.
 
 ```powershell
-$auraConfig = (spicetify -c).Trim()
-Copy-Item -LiteralPath $auraBackup -Destination $auraConfig -Force -ErrorAction Stop
+.\Windows\Iniciar-AURA.ps1 -Parar
+Copy-Item -LiteralPath $auraBackup -Destination (spicetify -c).Trim() -Force -ErrorAction Stop
 ```
 
-**PowerShell · reaplicar as personalizações anteriores**
+Use `spicetify apply` para reaplicar seus ajustes anteriores. Se o Spotify estava original antes da instalação, use `spicetify restore`. [Restauração do Spicetify](https://spicetify.app/docs/cli/commands#restore)
 
-```powershell
-spicetify apply
-```
+## Desenvolvimento
 
-Se o Spotify estava no estado original antes do teste, use o comando de restauração do cliente depois de restaurar o arquivo de configuração. [Restauração do Spicetify](https://spicetify.app/docs/cli/commands#restore)
+| Pasta | Conteúdo |
+| --- | --- |
+| [Themes/AURA](Themes/AURA) | Estilos e paleta do tema |
+| [Extensions](Extensions) | Extensão, integração com o player, animações e letras |
+| [Windows](Windows) | Iniciador e auxiliar de transparência |
+| [tests](tests) | Verificações de parsing, sincronização e consulta de letras |
 
-**PowerShell · restaurar o cliente original**
-
-```powershell
-spicetify restore
-```
-
-## Verificações realizadas
-
-**PowerShell · verificar a extensão na raiz do projeto**
+Rode as verificações na raiz do projeto.
 
 ```powershell
 node --check .\Extensions\aura.js
 node --test .\tests\lyrics.test.mjs
 ```
 
-O Edge executou o tema e a extensão em uma página temporária com a interface do Spicetify simulada. Foram verificados controles, eventos de faixa e pausa, recuperação do estado da faixa sem evento, Esc e foco, navegação, importação de imagem, persistência, dados corrompidos, movimento reduzido e quatro tamanhos de janela. O AURA também foi aplicado ao Spotify 1.3.9.2055 com o Spicetify 2.46.7. O roteiro acima cobre os testes de reprodução no cliente. [Decisões técnicas](docs/DECISOES.md)
+Para um teste no cliente, abra um álbum e volte pelo botão da ilha. Troque de faixa, pause e confira o vinil e a fila. Alterne os dois fundos e teste **Alt + Tab**. As escolhas de implementação estão no [histórico de decisões](docs/DECISOES.md).
+
+## Créditos
+
+AURA é uma personalização independente que usa [Spicetify](https://spicetify.app/) no Spotify desktop. As letras vêm do [LRCLIB](https://lrclib.net/). O módulo de letras inclui [js-yaml e sua licença](Extensions/aura-lyrics/LICENSE-js-yaml.txt).
