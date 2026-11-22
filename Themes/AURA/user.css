@@ -1,0 +1,332 @@
+#aura-immersive {
+  --aura-theme: 1;
+  --aura-ink: #120f17;
+  --aura-paper: #f9f3ed;
+  --aura-muted: #ddd2de;
+  --aura-accent: #f4d8a5;
+  --aura-line: rgb(255 244 251 / 16%);
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: 100%;
+  max-inline-size: none;
+  max-block-size: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  background: #100e17;
+  color: var(--aura-paper);
+  color-scheme: dark;
+  font: 400 1rem/1.45 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  text-align: start;
+}
+
+#aura-immersive:not([open]), #aura-immersive [hidden] { display: none !important; }
+#aura-immersive *, #aura-immersive *::before, #aura-immersive *::after { box-sizing: border-box; }
+
+#aura-immersive .aura-background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 24% 46%, #483147, #211a2d 46%, #100e17 82%);
+}
+
+#aura-immersive .aura-background img {
+  position: absolute;
+  inset: -7%;
+  width: 114%;
+  height: 114%;
+  object-fit: cover;
+  opacity: .73;
+  filter: blur(34px) saturate(.88);
+}
+
+#aura-immersive[data-local-background] .aura-background img {
+  filter: blur(5px) saturate(.88);
+}
+
+#aura-immersive .aura-background::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(0deg, rgb(11 9 17 / 82%), transparent 36%, transparent 72%, rgb(11 9 17 / 61%)),
+    linear-gradient(90deg, rgb(15 12 22 / 14%), rgb(15 12 22 / 68%) 60%, rgb(15 12 22 / 88%));
+}
+
+#aura-immersive .aura-shell {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: min(100%, 90rem);
+  min-height: 100%;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 5vw, 5rem);
+}
+
+#aura-immersive .aura-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .25rem 1rem;
+  min-height: 4.5rem;
+  padding-block: .5rem;
+  border-bottom: 1px solid var(--aura-line);
+}
+
+#aura-immersive .aura-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+  font-size: .84rem;
+  font-weight: 650;
+  letter-spacing: .2em;
+}
+
+#aura-immersive .aura-wordmark::before {
+  width: 1.2rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--aura-accent);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--aura-accent) 0 12%, transparent 15% 48%, var(--aura-accent) 51% 57%, transparent 60%);
+  content: "";
+}
+
+#aura-immersive .aura-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .125rem .35rem;
+}
+
+#aura-immersive button, #aura-immersive select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-block-size: 2.75rem;
+  padding: .4rem .75rem;
+  border: 1px solid transparent;
+  border-radius: .55rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+#aura-immersive button:hover:not(:disabled) { background: rgb(255 246 255 / 10%); }
+#aura-immersive button:disabled { opacity: .42; cursor: default; }
+#aura-immersive :is(button, input, select):focus-visible {
+  outline: 2px solid var(--aura-accent);
+  outline-offset: 3px;
+}
+
+#aura-immersive .aura-icon { display: inline-flex; flex: 0 0 auto; }
+#aura-immersive .aura-icon svg { display: block; width: 1.05rem; height: 1.05rem; fill: currentColor; }
+#aura-immersive .aura-nav button { font-size: .86rem; }
+#aura-immersive .aura-exit { background: rgb(14 11 19 / 32%); border-color: var(--aura-line); }
+#aura-immersive kbd { color: var(--aura-muted); font: 500 .7rem/1 "Segoe UI", sans-serif; }
+
+#aura-immersive .aura-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  align-items: center;
+  align-content: center;
+  gap: clamp(1.5rem, 6vw, 6.5rem);
+  padding-block: clamp(1.5rem, 8vh, 6rem);
+}
+
+#aura-immersive .aura-record {
+  justify-self: center;
+  position: relative;
+  width: min(100%, 29rem, 63vh);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #100f16;
+  box-shadow: 0 0 0 1px rgb(255 247 255 / 18%), 0 1.9rem 5rem rgb(4 2 9 / 65%);
+}
+
+#aura-immersive .aura-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    repeating-radial-gradient(circle, transparent 0 3px, rgb(0 0 0 / 38%) 4px, rgb(217 211 227 / 12%) 5px, transparent 6px 7px),
+    radial-gradient(circle, transparent 65%, rgb(207 198 221 / 23%) 69%, #121017 70%),
+    conic-gradient(from 218deg, #111017 0deg, #454150 26deg, #15131c 70deg, #0e0c14 146deg, #32303b 193deg, #14121a 247deg, #100e17 360deg);
+  animation: aura-vinyl-rotation 24s linear infinite paused;
+}
+
+#aura-immersive[data-playing] .aura-disc { animation-play-state: running; }
+@keyframes aura-vinyl-rotation { to { transform: rotate(1turn); } }
+
+#aura-immersive .aura-label {
+  position: absolute;
+  inset: 28%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle, #201724 0 3%, transparent 4%),
+    repeating-radial-gradient(circle, #574355 0 15%, #4f3b4d 16% 18%, #574355 19% 30%);
+  box-shadow: 0 0 0 2px rgb(8 5 13 / 78%), 0 0 0 3px rgb(255 239 255 / 16%);
+}
+
+#aura-immersive .aura-label img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#aura-immersive .aura-label::after {
+  position: absolute;
+  inset: 47.5%;
+  border: 1px solid rgb(255 239 255 / 28%);
+  border-radius: 50%;
+  background: #110e16;
+  content: "";
+}
+
+#aura-immersive .aura-track { min-width: 0; }
+#aura-immersive .aura-playback-state {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  margin: 0 0 .85rem;
+  color: var(--aura-muted);
+  font-size: .875rem;
+  font-weight: 550;
+}
+
+#aura-immersive .aura-playback-state::before {
+  width: .42rem;
+  height: .42rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  content: "";
+}
+
+#aura-immersive[data-playing] .aura-playback-state::before {
+  border-color: var(--aura-accent);
+  background: var(--aura-accent);
+}
+
+#aura-immersive .aura-title {
+  margin: 0;
+  color: var(--aura-paper);
+  font: 400 clamp(2.25rem, 5.65vw, 5.7rem)/.98 Georgia, Cambria, serif;
+  letter-spacing: -.055em;
+  overflow-wrap: anywhere;
+}
+
+#aura-immersive .aura-artist, #aura-immersive .aura-album { margin: 0; overflow-wrap: anywhere; }
+#aura-immersive .aura-artist { margin-top: 1.1rem; font-size: clamp(1.02rem, 1.65vw, 1.35rem); }
+#aura-immersive .aura-album { margin-top: .2rem; color: var(--aura-muted); font-size: .9rem; }
+
+#aura-immersive .aura-controls {
+  margin-top: clamp(1.25rem, 4.1vh, 2.5rem);
+  padding: .65rem clamp(.65rem, 1.9vw, 1.25rem) .9rem;
+  border: 1px solid var(--aura-line);
+  border-radius: 1rem;
+  background: rgb(19 15 25 / 64%);
+  box-shadow: 0 .7rem 2rem rgb(5 3 9 / 20%);
+  backdrop-filter: blur(12px);
+}
+
+#aura-immersive .aura-chrome { transition: opacity 240ms ease; }
+#aura-immersive[data-idle] .aura-chrome:not(:has(:focus-visible)) { opacity: 0; pointer-events: none; }
+
+#aura-immersive .aura-timeline {
+  display: grid;
+  grid-template-columns: minmax(3rem, auto) minmax(1.25rem, 1fr) minmax(3rem, auto);
+  align-items: center;
+  gap: .55rem;
+  color: var(--aura-muted);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#aura-immersive .aura-timeline time:last-child { text-align: end; }
+
+#aura-immersive .aura-range {
+  --aura-level: 0%;
+  appearance: none;
+  width: 100%;
+  height: 1.9rem;
+  margin: 0;
+  border-radius: .25rem;
+  background: linear-gradient(90deg, var(--aura-accent) var(--aura-level), rgb(255 243 252 / 28%) var(--aura-level)) center / 100% 3px no-repeat;
+  cursor: pointer;
+}
+
+#aura-immersive .aura-range::-webkit-slider-thumb {
+  appearance: none;
+  width: .68rem;
+  height: .68rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--aura-accent);
+}
+
+#aura-immersive .aura-range:disabled { opacity: .44; cursor: default; }
+#aura-immersive .aura-transport, #aura-immersive .aura-actions, #aura-immersive .aura-volume { display: flex; align-items: center; }
+#aura-immersive .aura-transport { flex-wrap: wrap; justify-content: space-between; gap: .35rem .75rem; }
+#aura-immersive .aura-actions { gap: .25rem; }
+#aura-immersive .aura-actions button { width: 2.75rem; padding: 0; border-radius: 50%; }
+#aura-immersive button.aura-play { width: 3rem; height: 3rem; background: var(--aura-accent); color: var(--aura-ink); }
+#aura-immersive button.aura-play:hover:not(:disabled) { background: #ffe9c3; }
+#aura-immersive .aura-volume { gap: .55rem; width: clamp(4rem, 12vw, 8rem); color: var(--aura-muted); }
+
+#aura-immersive .aura-player-error, #aura-immersive .aura-setting-status { margin: .65rem 0 0; color: var(--aura-muted); font-size: .84rem; }
+#aura-immersive .aura-player-error:empty, #aura-immersive .aura-setting-status:empty { margin: 0; }
+
+#aura-immersive .aura-settings:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  align-items: safe center;
+  justify-items: center;
+  z-index: 1;
+  padding: 1rem;
+  overflow: auto;
+  background: rgb(8 6 12 / 71%);
+}
+
+#aura-immersive .aura-settings-card {
+  width: min(100%, 32rem);
+  padding: clamp(1rem, 4vw, 2rem);
+  border: 1px solid var(--aura-line);
+  border-radius: 1rem;
+  background: #211b29;
+  box-shadow: 0 1.5rem 5rem rgb(4 2 9 / 62%);
+}
+
+#aura-immersive .aura-settings-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; }
+#aura-immersive .aura-settings h2 { margin: 0; font: 400 clamp(1.5rem, 4vw, 2.25rem)/1.1 Georgia, Cambria, serif; }
+#aura-immersive .aura-settings fieldset { min-width: 0; margin: 1.1rem 0 0; padding: .65rem 0 0; border: 0; border-top: 1px solid var(--aura-line); }
+#aura-immersive .aura-settings legend { padding: 0 .6rem 0 0; color: var(--aura-accent); font-size: .86rem; font-weight: 650; }
+#aura-immersive .aura-setting-options { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
+#aura-immersive .aura-settings button, #aura-immersive .aura-settings select { border-color: var(--aura-line); font-size: .88rem; }
+#aura-immersive .aura-settings select { background: #211b29; }
+#aura-immersive .aura-settings p { margin: .65rem 0; color: var(--aura-muted); font-size: .87rem; }
+#aura-immersive .aura-settings p:empty { margin: 0; }
+
+@media (max-width: 49rem) {
+  #aura-immersive .aura-stage { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; padding-block: 1.5rem; }
+  #aura-immersive .aura-record { width: min(62vw, 36vh, 19rem); }
+  #aura-immersive .aura-track { width: min(100%, 34rem); margin-inline: auto; text-align: center; }
+  #aura-immersive .aura-playback-state { justify-content: center; margin-bottom: .55rem; }
+  #aura-immersive .aura-timeline, #aura-immersive .aura-player-error { text-align: start; }
+  #aura-immersive .aura-volume { width: min(26vw, 8rem); }
+  #aura-immersive .aura-background::after { background: linear-gradient(180deg, rgb(12 9 17 / 28%), rgb(12 9 17 / 83%) 60%, #100e17); }
+}
+
+@media (max-width: 31rem) {
+  #aura-immersive .aura-header { justify-content: center; gap: .25rem; }
+  #aura-immersive .aura-nav { justify-content: center; }
+  #aura-immersive .aura-nav button { padding-inline: .45rem; }
+  #aura-immersive .aura-transport { justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #aura-immersive .aura-disc { animation: none; }
+  #aura-immersive .aura-chrome { transition: none; }
+}
