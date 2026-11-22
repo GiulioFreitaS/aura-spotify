@@ -88,11 +88,7 @@ function region(panels, mode) {
     rectangle({ left: innerWidth - 138, top: 7, right: innerWidth - 6, bottom: 54 }, 24),
   ];
   if (mode === "wallpaper") {
-    const top = Math.max(0, Math.min(
-      panels.top.getBoundingClientRect().bottom + 8,
-      panels.main.getBoundingClientRect().top - 8,
-    ));
-    regions.push(rectangle({ left: 0, top, right: innerWidth, bottom: innerHeight }, 18));
+    regions.push(rectangle({ left: 0, top: 0, right: innerWidth, bottom: innerHeight }, 18));
   } else {
     for (const pane of [panels.left, panels.main, panels.right, panels.dock].filter(visible)) {
       regions.push(shape(pane));
