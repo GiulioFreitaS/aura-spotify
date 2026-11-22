@@ -1,3 +1,4 @@
+import { createAlbumTransition } from "./album-transition.mjs";
 import { createMotion } from "./motion.mjs";
 
 const ROOT = document.documentElement;
@@ -122,7 +123,9 @@ function changesLayout(records) {
   });
 }
 
-export function createNativeLayout({ spicetify, signal, preferences, setLayout, setLiveBackground, getBackdrop, getTrack }) {
+export function createNativeLayout({
+  spicetify, signal, preferences, setLayout, setLiveBackground, getBackdrop, getTrack, accentForArtwork,
+}) {
   const veil = document.createElement("div");
   veil.className = "aura-native-background";
   veil.setAttribute("aria-hidden", "true");
@@ -153,8 +156,10 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     signal,
     enabled: () => !preferences().reduceMotion && !immersive?.open,
   });
+  const albumTransition = createAlbumTransition({ motion, panels: () => panels });
   let lastTrack = getTrack?.()?.uri;
   let playCue;
+  let accentSource;
 
   function syncBackground() {
     if (document.hidden || !ROOT.hasAttribute("data-aura-native")) return;
@@ -165,9 +170,24 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     else image.removeAttribute("src");
   }
 
+  function syncPanelAccent(track) {
+    if (document.hidden || !ROOT.hasAttribute("data-aura-native")) return;
+    const config = preferences();
+    const manual = config.colorMode === "manual" ? config.accent : "";
+    const source = manual || track?.artwork || "";
+    if (accentSource === source) return;
+    accentSource = source;
+    if (manual) ROOT.style.setProperty("--aura-native-accent", manual);
+    else if (!source) ROOT.style.removeProperty("--aura-native-accent");
+    else void accentForArtwork(source).then((color) => {
+      if (!signal.aborted && accentSource === source) ROOT.style.setProperty("--aura-native-accent", color);
+    });
+  }
+
   function onTrackChange() {
-    syncBackground();
     const track = getTrack?.();
+    syncBackground();
+    syncPanelAccent(track);
     if (!track?.uri || track.uri === lastTrack) return;
     lastTrack = track.uri;
     const cue = playCue;
@@ -191,6 +211,7 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     const control = target.closest("button,[role='button']");
     if (control?.matches(":disabled,[aria-disabled='true']") || target.closest(MOTION_POPOVERS)) return;
     const play = target.closest(PLAY_CONTROL);
+    if (!play && albumTransition.capture(target)) return;
     const row = target.closest(TRACK_ROW);
     const item = row ?? target.closest(MEDIA_CARD);
     if (!play && (!item || (control && control !== item && item.contains(control)))) return;
@@ -200,20 +221,24 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
   }
 
   document.addEventListener("click", onMediaClick, { ...options, capture: true });
+  document.addEventListener("keydown", (event) => {
+    if (event.altKey && (event.key === "ArrowLeft" || event.key === "ArrowRight")) albumTransition.captureExit();
+  }, { ...options, capture: true });
   image.addEventListener("load", () => { image.hidden = image.currentSrc !== image.src; }, options);
   image.addEventListener("error", () => { image.hidden = true; }, options);
   player.addEventListener("songchange", onTrackChange);
 
   const history = spicetify.Platform.History;
   const page = (pathname) => pathname?.startsWith("/search/") ? "/search" : pathname;
-  let currentPage = page(history.location?.pathname);
+  let currentPath = history.location?.pathname;
   let pageFrame;
   const unlisten = history.listen?.((entry) => {
-    const path = page(entry?.location?.pathname ?? entry?.pathname ?? history.location?.pathname);
-    if (!path || path === currentPage) return;
-    currentPage = path;
+    const path = entry?.location?.pathname ?? entry?.pathname ?? history.location?.pathname;
+    if (!path || path === currentPath) return;
+    const previous = currentPath;
+    currentPath = path;
     cancelAnimationFrame(pageFrame);
-    if (motion.active()) {
+    if (!albumTransition.navigate(previous, path) && motion.active() && page(path) !== page(previous)) {
       pageFrame = requestAnimationFrame(() => {
         const view = panels.main?.querySelector(".main-view-container__scroll-node-child");
         motion.reveal(view?.firstElementChild ?? view, 7);
@@ -289,7 +314,10 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     ROOT.toggleAttribute("data-aura-native", active);
     ROOT.toggleAttribute("data-aura-native-local", active && Boolean(config.background));
     ROOT.toggleAttribute("data-aura-native-motion", Boolean(supported && !config.reduceMotion));
-    if (config.reduceMotion || immersive?.open) motion.clear();
+    if (config.reduceMotion || immersive?.open) {
+      albumTransition.cancel();
+      motion.clear();
+    }
     syncBackdrop();
     if (wallpaperItem && wallpaperItem.isEnabled === config.nativeCutouts) {
       wallpaperItem.setState(!config.nativeCutouts);
@@ -299,8 +327,10 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
       menu?.setState?.(buttonState);
       button?.element?.setAttribute("aria-pressed", String(buttonState));
     }
-    if (active) syncBackground();
-    else {
+    if (active) {
+      syncBackground();
+      syncPanelAccent(getTrack?.());
+    } else {
       image.hidden = true;
       image.removeAttribute("src");
     }
@@ -353,7 +383,8 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     clearTimeout(layoutTimer);
     layoutTimer = undefined;
     playCue = undefined;
-    if (!document.hidden) {
+    if (document.hidden) albumTransition.cancel();
+    else {
       retryAfter = 0;
       update();
     }
@@ -371,6 +402,7 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     clearTimeout(expansionTimer);
     clearInterval(bridgeTimer);
     cancelAnimationFrame(pageFrame);
+    albumTransition.cancel();
     if (typeof unlisten === "function") unlisten();
     sizes.disconnect();
     layoutChanges.disconnect();
@@ -379,6 +411,7 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     menu?.deregister?.();
     wallpaperItem?.deregister?.();
     veil.remove();
+    ROOT.style.removeProperty("--aura-native-accent");
     for (const key of ["data-aura-native", "data-aura-native-local", "data-aura-native-motion", "data-aura-cutouts"]) {
       ROOT.removeAttribute(key);
     }

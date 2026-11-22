@@ -42,6 +42,7 @@ export function createMotion({ host, signal, enabled }) {
       if (remove) node.remove();
       if (active()) onFinish?.();
     }, { once: true });
+    return animation;
   }
 
   function ornament(className, point) {
@@ -107,6 +108,48 @@ export function createMotion({ host, signal, enabled }) {
     ], { duration: 540, easing: "cubic-bezier(.28,.55,.46,1)" }, true, () => wave(arrival, 180));
   }
 
+  function moveArtwork(source, destination) {
+    if (!active()) return;
+    const { rect: from } = source;
+    const { rect: to, element } = destination;
+    const dx = from.left - to.left;
+    const dy = from.top - to.top;
+    const sx = from.width / to.width;
+    const sy = from.height / to.height;
+    if (Math.abs(dx) + Math.abs(dy) < 4 && Math.abs(sx - 1) + Math.abs(sy - 1) < .06) return;
+
+    const cover = ornament("aura-motion-album", { x: to.left, y: to.top });
+    cover.style.width = to.width + "px";
+    cover.style.height = to.height + "px";
+    cover.style.borderRadius = destination.radius;
+    const image = new Image();
+    image.alt = "";
+    image.referrerPolicy = "no-referrer";
+    image.src = sx < 1 ? destination.artwork : source.artwork;
+    cover.append(image);
+
+    const transform = (x, y, scaleX, scaleY) =>
+      "translate(" + x + "px, " + y + "px) scale(" + scaleX + ", " + scaleY + ")";
+    const options = { duration: sx < 1 ? 520 : 460 };
+    animate(cover, [
+      { transform: transform(dx, dy, sx, sy), opacity: 1 },
+      { transform: transform(dx * .11, dy * .13 - 8, 1 + (sx - 1) * .13, 1 + (sy - 1) * .13), opacity: 1, offset: .54 },
+      { transform: transform(0, 0, 1, 1), opacity: 1, offset: .78 },
+      { transform: transform(0, 0, 1, 1), opacity: 0 },
+    ], options, true);
+    const landing = animate(element, [
+      { opacity: 0 },
+      { opacity: 0, offset: .72 },
+      { opacity: 1 },
+    ], options);
+    const cancel = () => {
+      stop(cover);
+      if (running.get(element)?.animation === landing) stop(element);
+    };
+    image.addEventListener("error", () => { if (running.has(cover)) cancel(); }, { once: true });
+    return cancel;
+  }
+
   function reveal(node, distance = 5) {
     if (!active() || !node?.getClientRects().length) return;
     animate(node, [
@@ -121,5 +164,5 @@ export function createMotion({ host, signal, enabled }) {
     clear();
     layer?.remove();
   }, { once: true });
-  return { wave, fly, reveal, clear, active };
+  return { wave, fly, moveArtwork, reveal, clear, active };
 }

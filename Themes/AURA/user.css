@@ -806,11 +806,11 @@
   z-index: 10000;
   inset: 0;
   overflow: hidden;
-  color: var(--aura-accent, var(--spice-button, #f2d6a1));
+  color: var(--aura-accent, var(--aura-native-highlight, var(--spice-button, #f2d6a1)));
   pointer-events: none;
 }
 
-.aura-motion-ring, .aura-motion-cover {
+.aura-motion-ring, .aura-motion-cover, .aura-motion-album {
   position: absolute;
   display: block;
   box-sizing: border-box;
@@ -836,15 +836,30 @@
   box-shadow: 0 9px 24px rgb(10 7 14 / 60%), 0 0 16px color-mix(in srgb, currentColor 40%, transparent);
 }
 
-.aura-motion-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.aura-motion-album {
+  overflow: hidden;
+  transform-origin: top left;
+  box-shadow: 0 10px 26px rgb(9 6 14 / 50%), 0 0 0 1px color-mix(in srgb, currentColor 52%, transparent);
+}
+
+.aura-motion-cover img, .aura-motion-album img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 
 /* AURA na janela normal do Spotify */
+@property --aura-native-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #dba581;
+}
+
 .aura-native-background { display: none; }
 
 html[data-aura-native] {
   --aura-normal-glass: rgb(31 27 36 / 90%);
-  --aura-normal-edge: rgb(246 225 209 / 21%);
+  --aura-native-highlight: color-mix(in srgb, var(--aura-native-accent, #dba581) 64%, #f9ecdf);
+  --aura-normal-edge: color-mix(in srgb, var(--aura-native-highlight) 39%, transparent);
+  --aura-normal-wash: color-mix(in srgb, var(--aura-native-highlight) 24%, transparent);
+  --aura-normal-reflection: color-mix(in srgb, var(--aura-native-highlight) 25%, transparent);
   --aura-normal-gap: clamp(12px, 1.4vw, 27px);
   --aura-normal-side-y: clamp(10px, 2vh, 22px);
 }
@@ -905,8 +920,10 @@ html[data-aura-native] .Root__globalNav {
   padding: 0 clamp(10px, 1.25vw, 20px);
   border: 1px solid var(--aura-normal-edge);
   border-radius: 999px;
-  background: linear-gradient(140deg, #332c39, #211c27 55%, #1b1720);
-  box-shadow: inset 0 1px rgb(255 246 237 / 9%), 0 11px 25px rgb(9 5 12 / 29%);
+  background:
+    radial-gradient(ellipse at 72% -45%, var(--aura-normal-wash), transparent 72%),
+    linear-gradient(140deg, #302935, #211c27 55%, #1b1720);
+  box-shadow: inset 0 1px var(--aura-normal-reflection), 0 11px 25px rgb(9 5 12 / 29%);
 }
 
 html[data-aura-native] .Root__globalNav .main-globalNav-historyButtonsContainer {
@@ -938,9 +955,9 @@ html[data-aura-native] :is(.Root__nav-bar, .Root__main-view, .Root__right-sideba
   border: 1px solid var(--aura-normal-edge);
   border-radius: 22px;
   background:
-    linear-gradient(151deg, rgb(244 218 198 / 12%), transparent 43%),
+    linear-gradient(146deg, var(--aura-normal-wash), transparent 40%),
     var(--aura-normal-glass);
-  box-shadow: inset 0 1px rgb(255 245 233 / 11%), inset 0 -2px 0 rgb(11 8 16 / 28%),
+  box-shadow: inset 0 1px var(--aura-normal-reflection), inset 0 -2px 0 rgb(11 8 16 / 28%),
     0 16px 38px rgb(8 5 13 / 34%);
 }
 
@@ -970,7 +987,9 @@ html[data-aura-native] .Root__now-playing-bar {
   margin: 0;
   padding: 9px clamp(10px, 1.4vw, 24px);
   border-radius: 25px;
-  background: linear-gradient(132deg, #312b37, #211c27 68%);
+  background:
+    radial-gradient(ellipse at 78% 0%, var(--aura-normal-wash), transparent 65%),
+    linear-gradient(132deg, #312b37, #211c27 68%);
 }
 
 html[data-aura-native] .main-yourLibraryX-library,
@@ -988,6 +1007,7 @@ html[data-aura-native][data-aura-cutouts] { --aura-normal-glass: #211d28; }
 
 @media (prefers-reduced-motion: no-preference) {
   html[data-aura-native-motion] { --aura-normal-ease: cubic-bezier(.22, .65, .32, 1); }
+  html[data-aura-native][data-aura-native-motion] { transition: --aura-native-accent 780ms var(--aura-normal-ease); }
 
   html[data-aura-native-motion] :is(.Root__globalNav, .Root__now-playing-bar, .Root__right-sidebar) button,
   html[data-aura-native-motion] .main-globalNav-navLink,

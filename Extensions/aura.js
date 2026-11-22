@@ -274,6 +274,10 @@
     }
   }
 
+  function thumbnailArtwork(item) {
+    return artworkUrl(item?.metadata?.image_small_url) || artworkUrl(item?.metadata?.image_url);
+  }
+
   function trackDetails(item) {
     const meta = item?.metadata ?? {};
     const artists = Array.isArray(item?.artists) ? item.artists.map((artist) => artist?.name).filter(Boolean) : [];
@@ -433,6 +437,7 @@
     let prefs = loadPreferences(storage);
     let current;
     let cover = "";
+    let accentInput;
     let queueSnapshot;
     let manualQueueKeys = new Set();
     let stopQueue;
@@ -539,9 +544,30 @@
       showImage(ui.background, prefs.background || cover);
     }
 
+    function accentForArtwork(source) {
+      if (accents.has(source)) return accents.get(source);
+      const sample = new Image();
+      sample.crossOrigin = "anonymous";
+      sample.referrerPolicy = "no-referrer";
+      sample.src = source;
+      const color = sample.decode().then(() => coverAccent(sample)).catch(() => VISUAL_DEFAULTS.accent);
+      if (accents.size >= 32) accents.delete(accents.keys().next().value);
+      accents.set(source, color);
+      return color;
+    }
+
     function syncAccent() {
-      const active = prefs.colorMode === "manual" ? prefs.accent : accents.get(cover) ?? VISUAL_DEFAULTS.accent;
-      dialog.style.setProperty("--aura-accent-color", active);
+      const manual = prefs.colorMode === "manual";
+      const source = manual ? prefs.accent : thumbnailArtwork(current) || cover;
+      if (source === accentInput) return;
+      accentInput = source;
+      if (manual || !source) {
+        dialog.style.setProperty("--aura-accent-color", source || VISUAL_DEFAULTS.accent);
+        return;
+      }
+      void accentForArtwork(source).then((color) => {
+        if (!lifetime.signal.aborted && accentInput === source) dialog.style.setProperty("--aura-accent-color", color);
+      });
     }
 
     function syncPlaybackButtons(state) {
@@ -657,13 +683,10 @@
       ui.state.hidden = !current;
       ui.previous.disabled = ui.play.disabled = ui.next.disabled = ui.like.disabled =
         ui.shuffle.disabled = ui.repeat.disabled = !current;
-      if (cover !== artwork) {
-        cover = artwork;
-        ui.cover.crossOrigin = "anonymous";
-        syncAccent();
-      }
+      cover = artwork;
       showImage(ui.cover, cover);
       showImage(ui.dockCover, cover);
+      syncAccent();
       syncBackground();
       paintProgress();
       if (changedTrack) showControls();
@@ -1050,22 +1073,7 @@
     for (const image of [ui.cover, ui.dockCover, ui.background]) {
       image.addEventListener("load", () => { image.hidden = image.currentSrc !== image.src; }, eventOptions);
     }
-    ui.cover.addEventListener("load", () => {
-      if (ui.cover.hidden || accents.has(cover) || !ui.cover.crossOrigin) return;
-      try {
-        if (accents.size >= 32) accents.delete(accents.keys().next().value);
-        accents.set(cover, coverAccent(ui.cover));
-        syncAccent();
-      } catch { /* Some artwork hosts don't allow reading their image pixels. */ }
-    }, eventOptions);
-    ui.cover.addEventListener("error", () => {
-      ui.cover.hidden = true;
-      if (cover && ui.cover.crossOrigin && ui.cover.getAttribute("src") === cover) {
-        ui.cover.removeAttribute("src");
-        ui.cover.removeAttribute("crossorigin");
-        showImage(ui.cover, cover);
-      }
-    }, eventOptions);
+    ui.cover.addEventListener("error", () => { ui.cover.hidden = true; }, eventOptions);
     ui.dockCover.addEventListener("error", () => { ui.dockCover.hidden = true; }, eventOptions);
     ui.background.addEventListener("error", () => {
       if (prefs.background && ui.background.getAttribute("src") === prefs.background) {
@@ -1128,11 +1136,11 @@
           setLayout: (enabled) => savePreferences({ nativeLayout: enabled }),
           setLiveBackground: (enabled) => savePreferences({ nativeCutouts: enabled }),
           getBackdrop: () => prefs.background || trackDetails(trackFromState(readPlayerState())).artwork,
+          accentForArtwork,
           getTrack: () => {
             const track = trackFromState(readPlayerState());
             if (!track) return null;
-            const thumbnail = artworkUrl(track.metadata?.image_small_url) || artworkUrl(track.metadata?.image_url);
-            return { uri: track.uri, artwork: thumbnail || trackDetails(track).artwork };
+            return { uri: track.uri, artwork: thumbnailArtwork(track) || trackDetails(track).artwork };
           },
         });
       }).catch((error) => console.warn("[AURA] Layout da janela normal indisponível.", error));

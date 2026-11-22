@@ -76,6 +76,8 @@ Para atualizar, guarde cópias de `aura.js`, `Themes/AURA/user.css` e dos módul
 
 O ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no perfil alterna o layout normal. A biblioteca usa a lista do Spotify, com os filtros **Playlists** e **Álbuns**. Páginas e menus entram suavemente, e capas e botões reagem ao mouse e ao foco. Ao iniciar uma nova faixa a partir de um clique, a miniatura da capa percorre a tela até o painel direito ou o player, com uma onda na chegada. **Reduzir movimento** nos ajustes do AURA também vale para a janela normal.
 
+A cor da faixa em reprodução ilumina as bordas dos painéis, a ilha de navegação e o player. Se você escolher uma cor manual em **Ajustes → Cor de destaque**, ela também ilumina a janela normal. Ao abrir um álbum pelo card, a capa cresce até o cabeçalho e volta ao card visível quando você retorna à página anterior.
+
 Escolha **AURA · Papel de parede** no menu do perfil para alternar o fundo da janela normal. As mesmas opções estão em **Modo imersivo → Ajustes → Janela normal do Spotify → Fundo da janela**. **Papel de parede** mostra a imagem do AURA ou a capa do álbum atrás dos painéis. **Desktop ao vivo** revela os apps e o desktop nos vãos.
 
 O auxiliar usa Python 3 pelo iniciador `py.exe`. No Spotify 1.3.9.2055 do instalador desktop, ele arredonda as áreas dos controles nativos e conserva o recorte durante **Alt + Tab**. O modo imersivo e as janelas estreitas usam a janela completa. Com o auxiliar desligado, os vãos mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
@@ -120,6 +122,7 @@ Em **Ajustes → Letras**, um atraso positivo faz a letra aparecer mais tarde. U
 8. Ajuste o atraso para `+1000 ms` e depois `-1000 ms`. Confira o atraso, o adiantamento e a persistência após reiniciar. Confira também uma faixa instrumental ou sem dados e a recuperação após uma falha de rede.
 9. Com a reprodução pausada, adicione uma faixa à fila pelo Spotify. Abra o modo imersivo e confira a faixa em **Adicionadas à fila**, acima de **Em seguida**. Confira também o relógio e os botões de aleatório, repetição, curtir e silenciar.
 10. Navegue por páginas e menus, inicie outra faixa e confira a chegada da capa ao painel direito ou ao player. Ative **Reduzir movimento** e confira o disco parado e a navegação sem as animações do AURA.
+11. Abra um álbum a partir de um card visível e volte pelo botão da ilha. Confira o percurso da capa nas duas direções. Troque de álbum em reprodução e confira a mudança de cor dos painéis em **Papel de parede** e **Desktop ao vivo**.
 
 ## Voltar à configuração anterior
 
