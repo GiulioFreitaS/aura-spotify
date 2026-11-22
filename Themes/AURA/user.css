@@ -679,6 +679,7 @@
 #aura-immersive .aura-setting-toggles { display: flex; flex-wrap: wrap; gap: .6rem .8rem; margin-block-start: .6rem; color: var(--aura-muted); font-size: .83rem; }
 #aura-immersive .aura-setting-toggles label { display: flex; align-items: center; gap: .45rem; }
 #aura-immersive .aura-setting-toggles input { margin: 0; accent-color: var(--aura-accent); }
+#aura-immersive .aura-setting-toggles + .aura-setting-options { margin-block-start: .65rem; }
 #aura-immersive .aura-settings button, #aura-immersive .aura-settings select { border-color: var(--aura-line); font-size: .85rem; }
 #aura-immersive .aura-settings select { background: #2b2531; }
 #aura-immersive .aura-settings input[type="color"] {

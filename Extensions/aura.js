@@ -11,7 +11,7 @@
   const DEFAULTS = { version: 4, modifiers: "ctrl-alt", key: "A", background: null, lyricsOffsetMs: 0, ...VISUAL_DEFAULTS, ...NATIVE_DEFAULTS };
   const VISUAL_RANGES = { dim: [0, 80], discSize: [70, 116], depth: [0, 100], lyricsSize: [80, 135] };
   const VISUAL_TOGGLES = ["showClock", "showQueue", "reduceMotion", "autoHide"];
-  const TOGGLES = [...VISUAL_TOGGLES, ...Object.keys(NATIVE_DEFAULTS)];
+  const TOGGLES = [...VISUAL_TOGGLES, "nativeLayout"];
   const HEX_COLOR = /^#[a-f\d]{6}$/i;
   const MAX_IMAGE_INPUT = 18 * 1024 * 1024;
   const MAX_IMAGE_DATA = 1_400_000;
@@ -182,7 +182,13 @@
             <legend>Janela normal do Spotify</legend>
             <div class="aura-setting-toggles">
               <label><input type="checkbox" data-aura="nativeLayout">Layout em painéis</label>
-              <label><input type="checkbox" data-aura="nativeCutouts">Desktop visível entre os painéis</label>
+            </div>
+            <div class="aura-setting-options">
+              <label for="aura-native-background-mode">Fundo da janela</label>
+              <select id="aura-native-background-mode" data-aura="nativeBackgroundMode">
+                <option value="desktop">Desktop ao vivo</option>
+                <option value="wallpaper">Papel de parede</option>
+              </select>
             </div>
           </fieldset>
         </div>
@@ -205,6 +211,7 @@
     }
     return {
       ...visual,
+      nativeCutouts: typeof value.nativeCutouts === "boolean" ? value.nativeCutouts : NATIVE_DEFAULTS.nativeCutouts,
       colorMode: value.colorMode === "manual" ? "manual" : VISUAL_DEFAULTS.colorMode,
       accent: typeof value.accent === "string" && HEX_COLOR.test(value.accent) ? value.accent.toLowerCase() : VISUAL_DEFAULTS.accent,
       lyricsPosition: value.lyricsPosition === "below" ? "below" : VISUAL_DEFAULTS.lyricsPosition,
@@ -693,7 +700,8 @@
       ui.accent.disabled = prefs.colorMode !== "manual";
       ui.lyricsPosition.value = prefs.lyricsPosition;
       for (const setting of TOGGLES) ui[setting].checked = prefs[setting];
-      ui.nativeCutouts.disabled = !prefs.nativeLayout;
+      ui.nativeBackgroundMode.value = prefs.nativeCutouts ? "desktop" : "wallpaper";
+      ui.nativeBackgroundMode.disabled = !prefs.nativeLayout;
       for (const setting of Object.keys(VISUAL_RANGES)) paintRange(ui[setting], prefs[setting], prefs[setting] + "%");
       dialog.toggleAttribute("data-reduced", prefs.reduceMotion);
       applyVisualRanges(prefs);
@@ -914,6 +922,9 @@
     for (const setting of TOGGLES) {
       ui[setting].addEventListener("change", () => savePreferences({ [setting]: ui[setting].checked }), eventOptions);
     }
+    ui.nativeBackgroundMode.addEventListener("change", () => {
+      savePreferences({ nativeCutouts: ui.nativeBackgroundMode.value === "desktop" });
+    }, eventOptions);
     for (const setting of Object.keys(VISUAL_RANGES)) {
       const slider = ui[setting];
       slider.addEventListener("input", () => {
@@ -1021,6 +1032,7 @@
           signal: lifetime.signal,
           preferences: () => prefs,
           setLayout: (enabled) => savePreferences({ nativeLayout: enabled }),
+          setLiveBackground: (enabled) => savePreferences({ nativeCutouts: enabled }),
           getBackdrop: () => prefs.background || trackDetails(trackFromState(readPlayerState())).artwork,
         });
       }).catch((error) => console.warn("[AURA] Layout da janela normal indisponível.", error));

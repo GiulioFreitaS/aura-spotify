@@ -76,7 +76,9 @@ Para atualizar, guarde cópias de `aura.js`, `Themes/AURA/user.css` e dos módul
 
 O ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no perfil alterna o layout normal. A biblioteca usa a lista do Spotify, com os filtros **Playlists** e **Álbuns**. As capas e os botões têm movimentos curtos ao receber o mouse ou o foco. **Reduzir movimento** nos ajustes do AURA também vale para a janela normal.
 
-**Desktop ao vivo** usa um recorte reversível da janela do Spotify 1.3.9.2055 do instalador desktop. O auxiliar usa Python 3 pelo iniciador `py.exe`. Ele cria os vãos que deixam aparecer o conteúdo real atrás da janela e conserva o recorte ao alternar de aplicativo com **Alt + Tab**. O modo imersivo e as janelas estreitas usam a janela completa. Com o auxiliar desligado, os vãos mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
+Escolha **AURA · Papel de parede** no menu do perfil para alternar o fundo da janela normal. As mesmas opções estão em **Modo imersivo → Ajustes → Janela normal do Spotify → Fundo da janela**. **Papel de parede** mostra a imagem do AURA ou a capa do álbum atrás dos painéis. **Desktop ao vivo** revela os apps e o desktop nos vãos.
+
+O auxiliar usa Python 3 pelo iniciador `py.exe`. No Spotify 1.3.9.2055 do instalador desktop, ele arredonda as áreas dos controles nativos e conserva o recorte durante **Alt + Tab**. O modo imersivo e as janelas estreitas usam a janela completa. Com o auxiliar desligado, os vãos mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
 
 **PowerShell · abrir o Spotify e iniciar o recorte**
 
@@ -84,7 +86,7 @@ O ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no per
 .\Windows\Iniciar-AURA.ps1
 ```
 
-Se o Spotify já estava aberto na primeira ativação do auxiliar, feche e abra o Spotify uma vez para carregar a configuração local. Para desligar o recorte, use **Modo imersivo → Ajustes → Janela normal do Spotify → Desktop visível entre os painéis** ou pare o auxiliar.
+Se o Spotify já estava aberto na primeira ativação do auxiliar, feche e abra o Spotify uma vez para carregar a configuração local. Pare o auxiliar para restaurar a janela completa.
 
 **PowerShell · parar o auxiliar e restaurar a janela**
 

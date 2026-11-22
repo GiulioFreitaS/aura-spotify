@@ -32,6 +32,20 @@ function findPanels() {
   ));
 }
 
+function outline(width, height, radius = 0) {
+  const corners = [[0, 0], [width, 0], [width, height], [0, height]];
+  if (!radius) return corners;
+  const segments = Math.min(10, Math.max(5, Math.ceil(radius / 4)));
+  return corners.flatMap(([x, y], i) => {
+    const cx = x ? x - radius : radius;
+    const cy = y ? y - radius : radius;
+    return Array.from({ length: segments + 1 }, (_, step) => {
+      const angle = ((i + 2) + step / segments) * Math.PI / 2;
+      return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
+    });
+  });
+}
+
 function shape(element) {
   const rect = element.getBoundingClientRect();
   const style = getComputedStyle(element);
@@ -50,38 +64,39 @@ function shape(element) {
     const point = matrix.transformPoint(new DOMPoint(x - originX, y - originY));
     return [point.x / point.w, point.y / point.w];
   };
-  const corners = [[0, 0], [width, 0], [width, height], [0, height]];
-  const outer = corners.map(([x, y]) => project(x, y));
+  const outer = outline(width, height).map(([x, y]) => project(x, y));
   const left = rect.left - Math.min(...outer.map(([x]) => x));
   const top = rect.top - Math.min(...outer.map(([, y]) => y));
-  const segments = Math.min(10, Math.max(5, Math.ceil(radius / 4)));
-  const points = !radius ? outer : corners.flatMap(([x, y], i) => {
-    const cx = x ? x - radius : radius;
-    const cy = y ? y - radius : radius;
-    return Array.from({ length: segments + 1 }, (_, step) => {
-      const angle = ((i + 2) + step / segments) * Math.PI / 2;
-      return project(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
-    });
-  });
+  const points = radius ? outline(width, height, radius).map(([x, y]) => project(x, y)) : outer;
   return points.map(([x, y]) => [x + left, y + top]);
 }
 
-function rectangle(rect) {
+function rectangle(rect, corner = 0) {
   const { left, right, top, bottom } = rect;
-  return [[left, top], [right, top], [right, bottom], [left, bottom]];
+  const width = right - left, height = bottom - top;
+  const radius = Math.min(width / 2, height / 2, corner);
+  return outline(width, height, radius).map(([x, y]) => [x + left, y + top]);
 }
 
-function region(panels, active) {
-  if (!active || [panels.root, panels.top, panels.left, panels.main].some((panel) => !visible(panel)) ||
+function region(panels, mode) {
+  if (!mode || [panels.root, panels.top, panels.left, panels.main].some((panel) => !visible(panel)) ||
       !visible(panels.dock) || [...document.querySelectorAll(OVERLAYS)].some(visible)) return null;
   // O menu nativo e os botões do Windows ficam nos cantos, fora da ilha.
   const regions = [
     shape(panels.top),
-    rectangle({ left: 0, top: 0, right: 58, bottom: 54 }),
-    rectangle({ left: innerWidth - 142, top: 0, right: innerWidth, bottom: 54 }),
+    rectangle({ left: 9, top: 8, right: 62, bottom: 54 }, 23),
+    rectangle({ left: innerWidth - 138, top: 7, right: innerWidth - 6, bottom: 54 }, 24),
   ];
-  for (const pane of [panels.left, panels.main, panels.right, panels.dock].filter(visible)) {
-    regions.push(shape(pane));
+  if (mode === "wallpaper") {
+    const top = Math.max(0, Math.min(
+      panels.top.getBoundingClientRect().bottom + 8,
+      panels.main.getBoundingClientRect().top - 8,
+    ));
+    regions.push(rectangle({ left: 0, top, right: innerWidth, bottom: innerHeight }, 18));
+  } else {
+    for (const pane of [panels.left, panels.main, panels.right, panels.dock].filter(visible)) {
+      regions.push(shape(pane));
+    }
   }
   for (const popup of [...document.querySelectorAll(POPOVERS)].filter(visible).slice(0, 8)) {
     regions.push(rectangle(popup.getBoundingClientRect()));
@@ -102,7 +117,7 @@ function changesLayout(records) {
   });
 }
 
-export function createNativeLayout({ spicetify, signal, preferences, setLayout, getBackdrop }) {
+export function createNativeLayout({ spicetify, signal, preferences, setLayout, setLiveBackground, getBackdrop }) {
   const veil = document.createElement("div");
   veil.className = "aura-native-background";
   veil.setAttribute("aria-hidden", "true");
@@ -117,13 +132,14 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
   let bridgeTimer;
   let retryAfter = 0;
   let requestBusy = false;
-  let sentActive = false;
+  let appliedMode = null;
   let bridge;
   let attemptedExpansion = false;
   let expansionTimer;
   let buttonState;
   let button;
   let menu;
+  let wallpaperItem;
   const options = { signal };
   const player = spicetify.Player;
   const onPlayer = () => {
@@ -146,14 +162,26 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
   if (spicetify.Menu?.Item) {
     menu = new spicetify.Menu.Item(playerLabel, preferences().nativeLayout, toggle, "album");
     menu.register();
+    wallpaperItem = new spicetify.Menu.Item("AURA · Papel de parede", !preferences().nativeCutouts, () => {
+      setLiveBackground(!preferences().nativeCutouts);
+    });
+    wallpaperItem.register();
+  }
+
+  function backdropMode() {
+    if (!ROOT.hasAttribute("data-aura-native")) return null;
+    return preferences().nativeCutouts ? "desktop" : "wallpaper";
+  }
+
+  function syncBackdrop() {
+    ROOT.toggleAttribute("data-aura-cutouts", appliedMode === "desktop" && backdropMode() === "desktop");
   }
 
   async function reportRegion() {
     if (!bridge || signal.aborted || document.hidden || requestBusy || performance.now() < retryAfter) return;
-    const config = preferences();
-    const active = config.nativeCutouts && ROOT.hasAttribute("data-aura-native");
-    const polygons = region(panels, active);
-    if (!polygons && !sentActive) return;
+    const mode = backdropMode();
+    const polygons = region(panels, mode);
+    if (!polygons && !appliedMode) return;
     requestBusy = true;
     try {
       const response = await fetch("http://127.0.0.1:" + bridge.port + "/layout/v1", {
@@ -165,16 +193,17 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
         signal: AbortSignal.any([signal, AbortSignal.timeout(650)]),
       });
       if (!response.ok) throw new Error("Recorte temporariamente indisponível.");
-      sentActive = Boolean(polygons);
-      ROOT.toggleAttribute("data-aura-cutouts", sentActive);
+      appliedMode = polygons ? mode : null;
+      syncBackdrop();
     } catch {
       if (!document.hidden) {
-        sentActive = false;
+        appliedMode = null;
         retryAfter = performance.now() + 1700;
-        ROOT.removeAttribute("data-aura-cutouts");
+        syncBackdrop();
       }
     } finally {
       requestBusy = false;
+      if (mode !== backdropMode() && !signal.aborted) schedule();
     }
   }
 
@@ -193,6 +222,10 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     ROOT.toggleAttribute("data-aura-native", active);
     ROOT.toggleAttribute("data-aura-native-local", active && Boolean(config.background));
     ROOT.toggleAttribute("data-aura-native-motion", active && !config.reduceMotion);
+    syncBackdrop();
+    if (wallpaperItem && wallpaperItem.isEnabled === config.nativeCutouts) {
+      wallpaperItem.setState(!config.nativeCutouts);
+    }
     if (buttonState !== config.nativeLayout) {
       buttonState = config.nativeLayout;
       menu?.setState?.(buttonState);
@@ -259,6 +292,7 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     player.removeEventListener("songchange", onPlayer);
     button?.deregister?.();
     menu?.deregister?.();
+    wallpaperItem?.deregister?.();
     veil.remove();
     for (const key of ["data-aura-native", "data-aura-native-local", "data-aura-native-motion", "data-aura-cutouts"]) {
       ROOT.removeAttribute(key);
