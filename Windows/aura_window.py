@@ -24,6 +24,8 @@ MODULE = APPDATA / "spicetify/Extensions/node_modules/aura-native"
 CONFIG = MODULE / "bridge-config.mjs"
 SPOTIFY = APPDATA / "Spotify/Spotify.exe"
 EXPORT = "export default "
+DWMWA_SYSTEMBACKDROP_TYPE = 38
+DWMSBT_NONE = 1
 
 
 def config_path(prepare=False):
@@ -75,6 +77,7 @@ class Windows:
         self.user = ct.WinDLL("user32", use_last_error=True)
         self.gdi = ct.WinDLL("gdi32", use_last_error=True)
         self.kernel = ct.WinDLL("kernel32", use_last_error=True)
+        self.dwm = ct.WinDLL("dwmapi")
         self.enum_callback = ct.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
         signatures = (
             (self.user.EnumWindows, wt.BOOL, (self.enum_callback, wt.LPARAM)),
@@ -89,6 +92,8 @@ class Windows:
             (self.user.GetWindowRgn, ct.c_int, (wt.HWND, wt.HRGN)),
             (self.user.SetWindowRgn, ct.c_int, (wt.HWND, wt.HRGN, wt.BOOL)),
             (self.user.SetProcessDpiAwarenessContext, wt.BOOL, (ct.c_void_p,)),
+            (self.dwm.DwmGetWindowAttribute, ct.c_long, (wt.HWND, wt.DWORD, ct.c_void_p, wt.DWORD)),
+            (self.dwm.DwmSetWindowAttribute, ct.c_long, (wt.HWND, wt.DWORD, ct.c_void_p, wt.DWORD)),
             (self.gdi.CreateRectRgn, wt.HRGN, (ct.c_int,) * 4),
             (self.gdi.CreatePolyPolygonRgn, wt.HRGN, (ct.POINTER(wt.POINT), ct.POINTER(ct.c_int), ct.c_int, ct.c_int)),
             (self.gdi.DeleteObject, wt.BOOL, (wt.HGDIOBJ,)),
@@ -151,12 +156,26 @@ class Windows:
             return None
         return client.right, client.bottom, origin.x - frame.left, origin.y - frame.top
 
+    def backdrop(self, window):
+        value = wt.DWORD()
+        result = self.dwm.DwmGetWindowAttribute(
+            window, DWMWA_SYSTEMBACKDROP_TYPE, ct.byref(value), ct.sizeof(value),
+        )
+        return value.value if result == 0 else None
+
+    def set_backdrop(self, window, value):
+        setting = wt.DWORD(value)
+        return self.dwm.DwmSetWindowAttribute(
+            window, DWMWA_SYSTEMBACKDROP_TYPE, ct.byref(setting), ct.sizeof(setting),
+        ) == 0
+
 
 class Region:
     def __init__(self, windows):
         self.windows = windows
         self.window = None
         self.original = None
+        self.original_backdrop = None
         self.last = None
         self.expires = 0.0
 
@@ -165,11 +184,18 @@ class Region:
             return True
         hwnd, pid = self.window
         if self.windows.process_id(hwnd) == pid:
-            if not self.windows.user.SetWindowRgn(hwnd, self.original, True):
-                return False
+            if self.original_backdrop is not None:
+                if not self.windows.set_backdrop(hwnd, self.original_backdrop):
+                    return False
+                self.original_backdrop = None
+            if self.last is not None:
+                if not self.windows.user.SetWindowRgn(hwnd, self.original, True):
+                    return False
+            elif self.original:
+                self.windows.gdi.DeleteObject(self.original)
         elif self.original:
             self.windows.gdi.DeleteObject(self.original)
-        self.window = self.original = self.last = None
+        self.window = self.original = self.original_backdrop = self.last = None
         self.expires = 0.0
         return True
 
@@ -188,9 +214,6 @@ class Region:
         if not geometry:
             return False
         signature = (geometry, polygons)
-        if window == self.window and signature == self.last:
-            self.expires = time.monotonic() + LEASE_SECONDS
-            return True
         if window != self.window:
             if not self.restore():
                 return False
@@ -199,6 +222,17 @@ class Region:
                 self.windows.gdi.DeleteObject(original)
                 original = None
             self.window, self.original = window, original
+
+        # Mica can paint the uncovered pixels even when Win32 hit testing already passes through.
+        backdrop = self.windows.backdrop(hwnd)
+        if backdrop is not None and backdrop != DWMSBT_NONE:
+            if not self.windows.set_backdrop(hwnd, DWMSBT_NONE):
+                self.restore()
+                return False
+            self.original_backdrop = backdrop
+        if signature == self.last:
+            self.expires = time.monotonic() + LEASE_SECONDS
+            return True
 
         width, height, x, y = geometry
         lengths = (ct.c_int * len(polygons))(*(len(polygon) for polygon in polygons))
