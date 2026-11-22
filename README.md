@@ -1,6 +1,6 @@
 # AURA
 
-AURA é um tema e uma extensão para o Spotify desktop no Windows. O modo imersivo mostra a faixa em reprodução, a capa estampada em todo o disco, as letras e os controles do player. A capa também dá cor ao fundo. Em **Ajustes**, é possível trocar o atalho, escolher uma imagem local e ajustar o atraso da letra.
+AURA é um tema e uma extensão para o Spotify desktop no Windows. O modo imersivo reúne três painéis de vidro em perspectiva, um disco com a capa da faixa e uma barra flutuante de reprodução. A busca e a biblioteca levam às telas do Spotify.
 
 ## Compatibilidade
 
@@ -69,9 +69,15 @@ O botão **AURA · Modo imersivo** tem ícone de disco e fica nos controles à d
 
 Para atualizar uma instalação do Marco 1, guarde cópias de `aura.js` e `Themes/AURA/user.css` já instalados. Substitua esses dois arquivos, copie `Extensions/aura-lyrics` para `Extensions/node_modules/aura-lyrics` na pasta de configuração do Spicetify e execute `spicetify apply`. A CLI disponibiliza os módulos ao Spotify. [Módulos do Spicetify](https://spicetify.app/docs/development/js-modules)
 
+## HUD e ajustes
+
+O painel da direita mostra até cinco faixas da fila. A barra flutuante controla a reprodução, a posição na faixa, o volume, o modo aleatório, a repetição e as curtidas. Os controles ficam visíveis por padrão. Ative **Recolher controles** em **Ajustes** para ocultar a barra durante a reprodução após alguns segundos sem interação.
+
+Em **Ajustes**, escolha o fundo, o escurecimento e a cor de destaque. A cor automática vem dos pixels da capa. A composição tem ajustes de tamanho do disco, profundidade 3D, brilho decorativo, relógio e fila. Janelas estreitas empilham os painéis. A opção **Reduzir movimento** pausa a animação do disco e do brilho e retira o movimento com o mouse. **Restaurar visual do AURA** mantém a imagem local, o atalho e o atraso das letras.
+
 ## Letras
 
-Abra **Letras** no cabeçalho do AURA. Enquanto esse painel estiver aberto, a extensão consulta o LRCLIB com o título, o artista principal, o álbum e a duração da faixa. A fonte aparece junto da letra. [API do LRCLIB](https://lrclib.net/docs)
+Abra **Letras** na navegação do AURA. Escolha o painel lateral ou a posição abaixo do disco em **Ajustes → Letras**. Enquanto esse painel estiver aberto, a extensão consulta o LRCLIB com o título, o artista principal, o álbum e a duração da faixa. A fonte aparece junto da letra. [API do LRCLIB](https://lrclib.net/docs)
 
 A indicação **Por linha**, **Por palavra** ou **Sem sincronização** acompanha o formato retornado. A extensão confere título, artista e duração antes de exibir a letra. Uma indicação separada identifica instrumentais e resultados indisponíveis. Se a rede falhar, **Tentar novamente** fica disponível depois da espera. [Formato Lyricsfile](https://lrclib.net/lyricsfile)
 
@@ -80,13 +86,14 @@ Em **Ajustes → Letras**, um atraso positivo faz a letra aparecer mais tarde. U
 ## O que testar com o Spotify aberto
 
 1. Toque uma música e abra o AURA pelo botão. Confira o título, o artista, o álbum e a capa com a faixa que realmente está tocando.
-2. Pause e retome, primeiro no AURA e depois pelo teclado multimídia ou pelo Spotify. Confira que o disco congela no mesmo ângulo ao pausar. Avance e volte uma faixa e confira a atualização dos dados e do fundo. Em reprodução, aguarde cerca de quatro segundos e mova o mouse para trazer os controles de volta.
+2. Pause e retome, primeiro no AURA e depois pelo teclado multimídia ou pelo Spotify. Confira que o disco congela no mesmo ângulo ao pausar. Avance e volte uma faixa e confira a atualização dos dados, da fila e do fundo. Ative **Recolher controles**, aguarde cerca de quatro segundos em reprodução e mova o mouse para trazer a barra de volta.
 3. Clique e arraste na linha do tempo. Confira se a reprodução passa para a posição escolhida e se o tempo continua avançando. Ajuste o volume e confirme no player nativo depois de sair. Use Tab e as setas para repetir o teste com teclado.
 4. Abra **Ajustes**, mude o atalho e escolha uma imagem JPG, PNG, WebP, AVIF ou BMP de até 18 MiB. Reinicie o Spotify e confira se a imagem e o novo atalho foram mantidos. Use **Usar capa do álbum** para voltar ao fundo automático. Esc volta dos ajustes para o modo imersivo e um segundo Esc retorna ao Spotify.
-5. Com o AURA aberto, teste **Buscar** e **Biblioteca**. Buscar abre a página nativa. Biblioteca leva à barra lateral quando o controle está disponível e abre **Músicas curtidas** nas variantes sem esse controle.
+5. Digite uma busca no painel esquerdo e confirme com Enter. A busca abre o resultado no Spotify. Teste **Biblioteca**, que leva à barra lateral ou a **Músicas curtidas**, e o atalho direto **Músicas curtidas**.
 6. Redimensione a janela e repita com a escala do Windows em 125% ou 150%. Confira se a fonte, o disco, a linha do tempo e o botão Sair continuam alcançáveis. Repita com uma faixa de nome longo e com uma faixa sem capa.
 7. Abra **Letras** em uma faixa com sincronização. Avance e volte pela linha do tempo e confira se o destaque acompanha a posição. Troque de faixa com o painel aberto e confira que a letra muda junto.
 8. Ajuste o atraso para `+1000 ms` e depois `-1000 ms`. Confira o atraso, o adiantamento e a persistência após reiniciar. Confira também uma faixa instrumental ou sem dados e a recuperação após uma falha de rede.
+9. Mude a profundidade, a cor e a posição das letras. Confira a fila, o relógio e os botões de aleatório, repetição, curtir e silenciar. Ative **Reduzir movimento** e confira o disco parado enquanto a faixa toca.
 
 ## Voltar à configuração anterior
 

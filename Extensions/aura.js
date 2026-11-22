@@ -2,116 +2,203 @@
   "use strict";
 
   const PREFERENCES_KEY = "aura:preferences";
-  const DEFAULTS = { version: 2, modifiers: "ctrl-alt", key: "A", background: null, lyricsOffsetMs: 0 };
+  const VISUAL_DEFAULTS = {
+    dim: 32, colorMode: "album", accent: "#dba581", discSize: 100, depth: 72,
+    lyricsSize: 100, lyricsPosition: "side", showClock: true, showQueue: true,
+    reduceMotion: false, autoHide: false,
+  };
+  const DEFAULTS = { version: 3, modifiers: "ctrl-alt", key: "A", background: null, lyricsOffsetMs: 0, ...VISUAL_DEFAULTS };
+  const VISUAL_RANGES = { dim: [0, 80], discSize: [70, 116], depth: [0, 100], lyricsSize: [80, 135] };
+  const VISUAL_TOGGLES = ["showClock", "showQueue", "reduceMotion", "autoHide"];
+  const HEX_COLOR = /^#[a-f\d]{6}$/i;
   const MAX_IMAGE_INPUT = 18 * 1024 * 1024;
   const MAX_IMAGE_DATA = 1_400_000;
   const THEME_ID = "aura-immersive";
   const IDLE_DELAY = 3600;
   const PLAYER_FALLBACK_DELAY = 500;
+  const QUEUE_LIMIT = 5;
 
   const layout = `
     <div class="aura-background" aria-hidden="true">
       <img data-aura="background" alt="" referrerpolicy="no-referrer" hidden>
     </div>
     <div class="aura-shell" data-aura="shell">
-      <header class="aura-header aura-chrome">
+      <header class="aura-header">
         <span class="aura-wordmark">AURA</span>
-        <nav class="aura-nav" aria-label="Navegação">
-          <button type="button" data-aura="library"><span class="aura-icon" data-icon="library" aria-hidden="true"></span>Biblioteca</button>
-          <button type="button" data-aura="search"><span class="aura-icon" data-icon="search" aria-hidden="true"></span>Buscar</button>
-          <button type="button" data-aura="lyricsButton" aria-controls="aura-lyrics" aria-expanded="false">Letras</button>
-          <button type="button" data-aura="settingsButton" aria-controls="aura-settings" aria-expanded="false">Ajustes</button>
+        <div class="aura-header-actions aura-chrome">
+          <button type="button" data-aura="settingsButton" aria-controls="aura-settings" aria-expanded="false"><span class="aura-icon" data-icon="settings" aria-hidden="true"></span>Ajustes</button>
           <button type="button" data-aura="exit" class="aura-exit" aria-label="Sair do modo imersivo">Sair <kbd aria-hidden="true">Esc</kbd></button>
-        </nav>
+        </div>
       </header>
-      <div class="aura-stage">
-        <div class="aura-record" aria-hidden="true">
-          <div class="aura-disc">
-            <div class="aura-label"><img data-aura="cover" alt="" referrerpolicy="no-referrer" hidden></div>
+      <div class="aura-stage" data-aura="stage">
+        <div class="aura-wing aura-wing-left aura-glass">
+          <form class="aura-search" data-aura="searchForm" role="search" aria-label="Buscar no Spotify">
+            <button type="submit" data-aura="search" aria-label="Buscar no Spotify" title="Buscar no Spotify"><span class="aura-icon" data-icon="search" aria-hidden="true"></span></button>
+            <input type="search" data-aura="query" aria-label="Buscar músicas, artistas e álbuns" placeholder="Buscar no Spotify" maxlength="120" autocomplete="off">
+          </form>
+          <nav class="aura-nav" aria-label="Navegação do AURA">
+            <button type="button" data-aura="now" aria-controls="aura-scene" aria-pressed="true"><span class="aura-icon" data-icon="album" aria-hidden="true"></span>Reprodução</button>
+            <button type="button" data-aura="lyricsButton" aria-controls="aura-lyrics" aria-expanded="false"><span class="aura-icon" data-icon="lyrics" aria-hidden="true"></span>Letras</button>
+            <button type="button" data-aura="library"><span class="aura-icon" data-icon="library" aria-hidden="true"></span>Biblioteca</button>
+            <button type="button" data-aura="favorites"><span class="aura-icon" data-icon="heart" aria-hidden="true"></span>Músicas curtidas</button>
+          </nav>
+          <div class="aura-clock" data-aura="clock" hidden>
+            <time data-aura="clockTime"></time>
+            <span data-aura="clockDate"></span>
           </div>
         </div>
-        <div class="aura-track">
-          <p class="aura-playback-state" data-aura="state" hidden></p>
-          <h1 class="aura-title" data-aura="title" tabindex="-1" autofocus aria-live="polite"></h1>
-          <p class="aura-artist" data-aura="artist" hidden></p>
-          <p class="aura-album" data-aura="album" hidden></p>
-          <div class="aura-controls aura-chrome" role="group" aria-label="Controles de reprodução">
-            <div class="aura-timeline">
-              <time data-aura="elapsed">0:00</time>
-              <input class="aura-range" data-aura="seek" type="range" min="0" max="1000" value="0" aria-label="Posição na faixa" disabled>
-              <time data-aura="duration">0:00</time>
-            </div>
-            <div class="aura-transport">
-              <div class="aura-actions">
-                <button type="button" data-aura="previous" aria-label="Faixa anterior" title="Faixa anterior"><span class="aura-icon" data-icon="skip-back" aria-hidden="true"></span></button>
-                <button type="button" data-aura="play" class="aura-play" aria-label="Reproduzir"><span class="aura-icon" data-aura="playIcon" aria-hidden="true"></span></button>
-                <button type="button" data-aura="next" aria-label="Próxima faixa" title="Próxima faixa"><span class="aura-icon" data-icon="skip-forward" aria-hidden="true"></span></button>
-              </div>
-              <div class="aura-volume">
-                <span class="aura-icon" data-icon="volume" aria-hidden="true"></span>
-                <input class="aura-range" data-aura="volume" type="range" min="0" max="100" value="0" aria-label="Volume">
+        <section id="aura-scene" class="aura-scene aura-glass" data-aura="scene" aria-labelledby="aura-title">
+          <div class="aura-hero">
+            <div class="aura-turntable" aria-hidden="true">
+              <div class="aura-record">
+                <div class="aura-disc">
+                  <div class="aura-label"><img data-aura="cover" alt="" referrerpolicy="no-referrer" hidden></div>
+                </div>
               </div>
             </div>
-            <p class="aura-player-error" data-aura="playerError" role="status"></p>
+            <div class="aura-track">
+              <p class="aura-playback-state" data-aura="state" hidden></p>
+              <h1 id="aura-title" class="aura-title" data-aura="title" tabindex="-1" autofocus aria-live="polite"></h1>
+              <p class="aura-artist" data-aura="artist" hidden></p>
+              <p class="aura-album" data-aura="album" hidden></p>
+            </div>
           </div>
-        </div>
-        <section id="aura-lyrics" class="aura-lyrics" data-aura="lyrics" aria-labelledby="aura-lyrics-title" hidden>
-          <header class="aura-lyrics-header">
-            <h2 id="aura-lyrics-title">Letra</h2>
-            <p class="aura-lyrics-meta" data-lyrics="meta" hidden>
-              <a data-lyrics="source" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer">LRCLIB</a>
-              <span data-lyrics="kind" hidden></span>
-            </p>
-          </header>
-          <p class="aura-lyrics-status" data-lyrics="status" role="status"></p>
-          <button type="button" class="aura-lyrics-retry" data-lyrics="retry" hidden>Tentar novamente</button>
-          <div class="aura-lyrics-scroll" data-lyrics="scroll" role="region" aria-label="Letra da faixa" tabindex="0" hidden></div>
         </section>
+        <aside class="aura-wing aura-wing-right aura-glass" data-aura="side" aria-label="Fila e letra">
+          <section class="aura-queue" data-aura="queue" aria-labelledby="aura-queue-title">
+            <h2 id="aura-queue-title"><span class="aura-icon" data-icon="queue" aria-hidden="true"></span>A seguir</h2>
+            <p class="aura-queue-empty" data-aura="queueStatus" hidden></p>
+            <ol class="aura-queue-tracks" data-aura="queueTracks" aria-label="Próximas faixas"></ol>
+          </section>
+          <section id="aura-lyrics" class="aura-lyrics" data-aura="lyrics" aria-labelledby="aura-lyrics-title" hidden>
+            <header class="aura-lyrics-header">
+              <h2 id="aura-lyrics-title"><span class="aura-icon" data-icon="lyrics" aria-hidden="true"></span>Letra</h2>
+              <p class="aura-lyrics-meta" data-lyrics="meta" hidden>
+                <a data-lyrics="source" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer">LRCLIB</a>
+                <span data-lyrics="kind" hidden></span>
+              </p>
+            </header>
+            <p class="aura-lyrics-status" data-lyrics="status" role="status"></p>
+            <button type="button" class="aura-lyrics-retry" data-lyrics="retry" hidden>Tentar novamente</button>
+            <div class="aura-lyrics-scroll" data-lyrics="scroll" role="region" aria-label="Letra da faixa" tabindex="0" hidden></div>
+          </section>
+        </aside>
       </div>
+      <footer class="aura-dock aura-glass aura-chrome" role="group" aria-label="Controles de reprodução">
+        <div class="aura-dock-track">
+          <div class="aura-dock-cover" aria-hidden="true"><img data-aura="dockCover" alt="" referrerpolicy="no-referrer" hidden></div>
+          <div class="aura-dock-labels">
+            <span data-aura="dockTitle"></span>
+            <span data-aura="dockArtist" hidden></span>
+          </div>
+          <button type="button" data-aura="like" aria-pressed="false" aria-label="Curtir faixa" title="Curtir faixa"><span class="aura-icon" data-aura="likeIcon" aria-hidden="true"></span></button>
+        </div>
+        <div class="aura-actions">
+          <button type="button" data-aura="shuffle" aria-pressed="false" aria-label="Modo aleatório" title="Modo aleatório"><span class="aura-icon" data-icon="shuffle" aria-hidden="true"></span></button>
+          <button type="button" data-aura="previous" aria-label="Faixa anterior" title="Faixa anterior"><span class="aura-icon" data-icon="skip-back" aria-hidden="true"></span></button>
+          <button type="button" data-aura="play" class="aura-play" aria-label="Reproduzir"><span class="aura-icon" data-aura="playIcon" aria-hidden="true"></span></button>
+          <button type="button" data-aura="next" aria-label="Próxima faixa" title="Próxima faixa"><span class="aura-icon" data-icon="skip-forward" aria-hidden="true"></span></button>
+          <button type="button" data-aura="repeat" aria-pressed="false" aria-label="Repetição desligada" title="Repetição desligada"><span class="aura-icon" data-aura="repeatIcon" aria-hidden="true"></span></button>
+        </div>
+        <div class="aura-timeline">
+          <time data-aura="elapsed">0:00</time>
+          <input class="aura-range" data-aura="seek" type="range" min="0" max="1000" value="0" aria-label="Posição na faixa" disabled>
+          <time data-aura="duration">0:00</time>
+        </div>
+        <div class="aura-volume">
+          <button type="button" data-aura="mute" aria-pressed="false" aria-label="Silenciar" title="Silenciar"><span class="aura-icon" data-aura="muteIcon" aria-hidden="true"></span></button>
+          <input class="aura-range" data-aura="volume" type="range" min="0" max="100" value="0" aria-label="Volume">
+        </div>
+        <p class="aura-player-error" data-aura="playerError" role="status"></p>
+      </footer>
     </div>
     <section id="aura-settings" class="aura-settings" data-aura="settings" aria-labelledby="aura-settings-title" hidden>
-      <div class="aura-settings-card">
+      <div class="aura-settings-card aura-glass">
         <header class="aura-settings-header">
           <h2 id="aura-settings-title">Ajustes</h2>
           <button type="button" data-aura="settingsBack">Voltar</button>
         </header>
-        <fieldset>
-          <legend>Atalho de teclado</legend>
-          <div class="aura-setting-options">
-            <select data-aura="modifiers" aria-label="Teclas modificadoras">
-              <option value="ctrl-alt">Ctrl + Alt</option>
-              <option value="ctrl-shift">Ctrl + Shift</option>
-            </select>
-            <span aria-hidden="true">+</span>
-            <select data-aura="key" aria-label="Letra do atalho"></select>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Fundo</legend>
-          <p data-aura="backgroundChoice"></p>
-          <div class="aura-setting-options">
-            <button type="button" data-aura="chooseImage">Escolher imagem</button>
-            <button type="button" data-aura="useCover">Usar capa do álbum</button>
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/bmp" data-aura="file" hidden>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Letras</legend>
-          <div class="aura-setting-options">
-            <label for="aura-lyrics-offset">Atraso (ms)</label>
-            <input id="aura-lyrics-offset" type="number" min="-5000" max="5000" step="100" data-aura="lyricsOffset" aria-describedby="aura-lyrics-offset-help">
-            <button type="button" data-aura="resetLyricsOffset">Zerar</button>
-          </div>
-          <p id="aura-lyrics-offset-help">Valores positivos fazem a letra aparecer mais tarde.</p>
-        </fieldset>
-        <p data-aura="settingStatus" role="status"></p>
+        <div class="aura-settings-grid">
+          <fieldset>
+            <legend>Cena e cor</legend>
+            <p data-aura="backgroundChoice"></p>
+            <div class="aura-setting-options">
+              <button type="button" data-aura="chooseImage">Escolher imagem</button>
+              <button type="button" data-aura="useCover">Usar capa do álbum</button>
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/bmp" data-aura="file" hidden>
+            </div>
+            <label class="aura-setting-slider">Escurecimento<input class="aura-range" type="range" data-aura="dim" min="0" max="80" step="1"></label>
+            <div class="aura-setting-options">
+              <label for="aura-color-mode">Cor de destaque</label>
+              <select id="aura-color-mode" data-aura="colorMode">
+                <option value="album">Da capa</option>
+                <option value="manual">Manual</option>
+              </select>
+              <input type="color" data-aura="accent" aria-label="Escolher cor de destaque">
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Composição</legend>
+            <label class="aura-setting-slider">Profundidade 3D e brilho decorativo<input class="aura-range" type="range" data-aura="depth" min="0" max="100" step="1"></label>
+            <label class="aura-setting-slider">Tamanho do disco<input class="aura-range" type="range" data-aura="discSize" min="70" max="116" step="1"></label>
+            <div class="aura-setting-toggles">
+              <label><input type="checkbox" data-aura="showClock">Relógio</label>
+              <label><input type="checkbox" data-aura="showQueue">Fila lateral</label>
+              <label><input type="checkbox" data-aura="reduceMotion">Reduzir movimento</label>
+              <label><input type="checkbox" data-aura="autoHide">Recolher controles</label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Letras</legend>
+            <div class="aura-setting-options">
+              <label for="aura-lyrics-position">Posição</label>
+              <select id="aura-lyrics-position" data-aura="lyricsPosition">
+                <option value="side">Painel lateral</option>
+                <option value="below">Abaixo do disco</option>
+              </select>
+            </div>
+            <label class="aura-setting-slider">Tamanho do texto<input class="aura-range" type="range" data-aura="lyricsSize" min="80" max="135" step="1"></label>
+            <div class="aura-setting-options">
+              <label for="aura-lyrics-offset">Atraso (ms)</label>
+              <input id="aura-lyrics-offset" type="number" min="-5000" max="5000" step="100" data-aura="lyricsOffset" aria-describedby="aura-lyrics-offset-help">
+              <button type="button" data-aura="resetLyricsOffset">Zerar</button>
+            </div>
+            <p id="aura-lyrics-offset-help">Valores positivos fazem a letra aparecer mais tarde.</p>
+          </fieldset>
+          <fieldset>
+            <legend>Atalho de teclado</legend>
+            <div class="aura-setting-options">
+              <select data-aura="modifiers" aria-label="Teclas modificadoras">
+                <option value="ctrl-alt">Ctrl + Alt</option>
+                <option value="ctrl-shift">Ctrl + Shift</option>
+              </select>
+              <span aria-hidden="true">+</span>
+              <select data-aura="key" aria-label="Letra do atalho"></select>
+            </div>
+          </fieldset>
+        </div>
+        <footer class="aura-settings-footer">
+          <button type="button" data-aura="resetVisual">Restaurar visual do AURA</button>
+          <p data-aura="settingStatus" role="status"></p>
+        </footer>
       </div>
     </section>`;
 
   function validatePreferences(value) {
-    if (value?.version !== 1 && value?.version !== DEFAULTS.version) return { ...DEFAULTS };
+    if (![1, 2, DEFAULTS.version].includes(value?.version)) return { ...DEFAULTS };
     const { modifiers, key, background, lyricsOffsetMs } = value;
+    const visual = { ...VISUAL_DEFAULTS };
+    for (const [setting, [min, max]] of Object.entries(VISUAL_RANGES)) {
+      if (Number.isInteger(value[setting]) && value[setting] >= min && value[setting] <= max) visual[setting] = value[setting];
+    }
+    for (const setting of VISUAL_TOGGLES) {
+      if (typeof value[setting] === "boolean") visual[setting] = value[setting];
+    }
     return {
+      ...visual,
+      colorMode: value.colorMode === "manual" ? "manual" : VISUAL_DEFAULTS.colorMode,
+      accent: typeof value.accent === "string" && HEX_COLOR.test(value.accent) ? value.accent.toLowerCase() : VISUAL_DEFAULTS.accent,
+      lyricsPosition: value.lyricsPosition === "below" ? "below" : VISUAL_DEFAULTS.lyricsPosition,
       version: DEFAULTS.version,
       modifiers: modifiers === "ctrl-shift" ? modifiers : DEFAULTS.modifiers,
       key: typeof key === "string" && /^[A-Z]$/.test(key) ? key : DEFAULTS.key,
@@ -165,7 +252,7 @@
 
   function trackDetails(item) {
     const meta = item?.metadata ?? {};
-    const artists = item?.artists?.map((artist) => artist.name).filter(Boolean) ?? [];
+    const artists = Array.isArray(item?.artists) ? item.artists.map((artist) => artist?.name).filter(Boolean) : [];
     if (!artists.length) {
       for (const [key, value] of Object.entries(meta)) {
         if (/^artist_name(?::\d+)?$/.test(key) && typeof value === "string" && value) {
@@ -175,8 +262,8 @@
     }
     const artwork = [
       meta.image_xlarge_url, meta.image_large_url, meta.image_url, meta.image_small_url,
-      ...(item?.images ?? []).map((image) => image.url),
-      ...(item?.album?.images ?? []).map((image) => image.url),
+      ...(Array.isArray(item?.images) ? item.images : []).map((image) => image?.url ?? image?.uri),
+      ...(Array.isArray(item?.album?.images) ? item.album.images : []).map((image) => image?.url ?? image?.uri),
     ].map(artworkUrl).find(Boolean);
     return {
       title: item?.name || meta.title || (item ? "Faixa sem título" : "Nenhuma faixa selecionada"),
@@ -194,7 +281,35 @@
     else image.removeAttribute("src");
   }
 
-  function navigateNative(spicetify, target) {
+  function coverAccent(image) {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 24;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    context.drawImage(image, 0, 0, 24, 24);
+    const { data } = context.getImageData(0, 0, 24, 24);
+    const buckets = new Map();
+    for (let i = 0; i < data.length; i += 4) {
+      const red = data[i], green = data[i + 1], blue = data[i + 2];
+      const max = Math.max(red, green, blue), min = Math.min(red, green, blue);
+      const saturation = max - min;
+      if (data[i + 3] < 192 || saturation < 26 || max < 55 || min > 223) continue;
+      const key = (red >> 5) * 64 + (green >> 5) * 8 + (blue >> 5);
+      const bucket = buckets.get(key) ?? { red: 0, green: 0, blue: 0, weight: 0 };
+      const weight = 1 + saturation / 128;
+      bucket.red += red * weight;
+      bucket.green += green * weight;
+      bucket.blue += blue * weight;
+      bucket.weight += weight;
+      buckets.set(key, bucket);
+    }
+    const best = [...buckets.values()].sort((left, right) => right.weight - left.weight)[0];
+    if (!best) return VISUAL_DEFAULTS.accent;
+    return "#" + [best.red, best.green, best.blue].map((sum) =>
+      Math.round(sum / best.weight).toString(16).padStart(2, "0"),
+    ).join("");
+  }
+
+  function navigateNative(spicetify, target, query = "") {
     // A Biblioteca lateral usa o controle nativo quando ele está disponível.
     if (target === "library") {
       const sidebar = document.querySelector("#Desktop_LeftSidebar_Id, .YourLibraryX");
@@ -214,7 +329,9 @@
         return;
       }
     }
-    spicetify.Platform.History.push(target === "search" ? "/search" : "/collection/tracks");
+    if (target === "search") {
+      spicetify.Platform.History.push(query ? "/search/" + encodeURIComponent(query) : "/search");
+    } else spicetify.Platform.History.push("/collection/tracks");
   }
 
   function mount(spicetify) {
@@ -234,7 +351,11 @@
       (node) => [node.dataset.aura, node],
     ));
     const icons = spicetify.SVGIcons;
-    const iconFallbacks = { play: "▶", pause: "Ⅱ", "skip-back": "⏮", "skip-forward": "⏭", volume: "◖" };
+    const iconFallbacks = {
+      album: "◉", heart: "♡", "heart-active": "♥", library: "▥", lyrics: "♫", play: "▶", pause: "Ⅱ",
+      queue: "≡", repeat: "↻", "repeat-once": "↻¹", search: "⌕", settings: "⚙", shuffle: "⤨",
+      "skip-back": "⏮", "skip-forward": "⏭", volume: "◖", "volume-off": "◖×",
+    };
 
     function drawIcon(node, name) {
       if (node.dataset.currentIcon === name) return;
@@ -247,12 +368,21 @@
 
     for (const node of dialog.querySelectorAll("[data-icon]")) drawIcon(node, node.dataset.icon);
     for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") ui.key.add(new Option(letter, letter));
+    for (const [button, suffix] of Object.entries({ like: "Heart", mute: "Mute", repeat: "Repeat", shuffle: "Shuffle" })) {
+      ui[button].hidden = typeof player["toggle" + suffix] !== "function" || typeof player["get" + suffix] !== "function";
+    }
 
     const lifetime = new AbortController();
     const eventOptions = { signal: lifetime.signal };
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    const stacked = matchMedia("(max-width: 50rem)");
+    const timeFormat = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    const dateFormat = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "numeric", month: "long" });
+    const accents = new Map();
     let prefs = loadPreferences(storage);
     let current;
     let cover = "";
+    let queueSignature;
     let lyricsTrack = null;
     let lyricsView;
     let lyricsModule;
@@ -260,6 +390,11 @@
     let listening = false;
     let playerTimer;
     let lastPlayerEvent = 0;
+    let lastExtras = -Infinity;
+    let clockTimer;
+    let pointerTimer;
+    let pointerX;
+    let pointerY;
     let idleTimer;
     let releaseTimer;
     let drag;
@@ -275,14 +410,15 @@
     function showControls() {
       clearTimeout(idleTimer);
       dialog.removeAttribute("data-idle");
-      if (dialog.open && playing && !document.hidden && ui.settings.hidden && !drag) {
+      if (prefs.autoHide && dialog.open && playing && !document.hidden && ui.settings.hidden && !drag) {
         idleTimer = setTimeout(() => dialog.setAttribute("data-idle", ""), IDLE_DELAY);
       }
     }
 
     function paintRange(range, value, text) {
       if (range.valueAsNumber !== value) range.value = value;
-      const fill = value / Number(range.max) * 100 + "%";
+      const min = Number(range.min);
+      const fill = (value - min) / (Number(range.max) - min) * 100 + "%";
       if (range.style.getPropertyValue("--aura-level") !== fill) {
         range.style.setProperty("--aura-level", fill);
       }
@@ -309,7 +445,7 @@
       paintRange(ui.volume, value, value + "%");
     }
 
-    function syncProgress() {
+    function syncProgress(forceExtras = false) {
       if (!dialog.open || document.hidden) return;
       const state = readPlayerState();
       const track = trackFromState(state);
@@ -317,6 +453,12 @@
       syncPlayback(state);
       if (drag?.slider !== ui.seek) paintProgress();
       if (drag?.slider !== ui.volume) paintVolume(player.getVolume());
+      const now = performance.now();
+      if (forceExtras || now - lastExtras >= PLAYER_FALLBACK_DELAY) {
+        lastExtras = now;
+        syncPlaybackButtons(state);
+        syncQueue(state);
+      }
     }
 
     function syncPlayback(state) {
@@ -342,20 +484,106 @@
       showImage(ui.background, prefs.background || cover);
     }
 
+    function syncAccent() {
+      const active = prefs.colorMode === "manual" ? prefs.accent : accents.get(cover) ?? VISUAL_DEFAULTS.accent;
+      dialog.style.setProperty("--aura-accent-color", active);
+    }
+
+    function syncPlaybackButtons(state) {
+      if (!ui.shuffle.hidden) ui.shuffle.setAttribute("aria-pressed", String(Boolean(state && player.getShuffle())));
+      if (!ui.repeat.hidden) {
+        const repeat = state && player.getRepeat();
+        const label = repeat === 2 ? "Repetir faixa" : repeat === 1 ? "Repetir fila" : "Repetição desligada";
+        ui.repeat.setAttribute("aria-pressed", String(repeat === 1 || repeat === 2));
+        ui.repeat.setAttribute("aria-label", label);
+        ui.repeat.title = label;
+        drawIcon(ui.repeatIcon, repeat === 2 ? "repeat-once" : "repeat");
+      }
+      if (!ui.like.hidden) {
+        const liked = Boolean(current && player.getHeart());
+        const label = liked ? "Remover das músicas curtidas" : "Curtir faixa";
+        ui.like.setAttribute("aria-pressed", String(liked));
+        ui.like.setAttribute("aria-label", label);
+        ui.like.title = label;
+        drawIcon(ui.likeIcon, liked ? "heart-active" : "heart");
+      }
+      if (!ui.mute.hidden) {
+        const muted = Boolean(player.getMute());
+        const label = muted ? "Reativar som" : "Silenciar";
+        ui.mute.setAttribute("aria-pressed", String(muted));
+        ui.mute.setAttribute("aria-label", label);
+        ui.mute.title = label;
+        drawIcon(ui.muteIcon, muted ? "volume-off" : "volume");
+      }
+    }
+
+    function syncQueue(state) {
+      if (ui.queue.hidden) return;
+      const queue = spicetify.Queue;
+      // O cliente 1.3.9 também fornece as próximas faixas no estado nativo.
+      const next = Array.isArray(queue?.nextTracks) ? queue.nextTracks : state?.nextItems;
+      const tracks = Array.isArray(next) ? next.filter((item) =>
+        item?.uri && !/^spotify:(?:delimiter|separator)(?::|$)/.test(item.uri),
+      ).slice(0, QUEUE_LIMIT).map(trackDetails) : [];
+      const status = tracks.length ? "" : current && !Array.isArray(next) ?
+        "A fila está indisponível." : "Nenhuma próxima faixa na fila.";
+      const signature = JSON.stringify([status, tracks]);
+      if (signature === queueSignature) return;
+      queueSignature = signature;
+      updateText(ui.queueStatus, status);
+      ui.queueStatus.hidden = !status;
+      ui.queueTracks.replaceChildren(...tracks.map(({ title, artist, artwork }) => {
+        const row = document.createElement("li");
+        const cover = document.createElement("span");
+        cover.className = "aura-queue-cover";
+        if (artwork) {
+          const image = new Image();
+          image.alt = "";
+          image.referrerPolicy = "no-referrer";
+          image.decoding = "async";
+          image.addEventListener("error", () => image.remove(), { once: true });
+          image.src = artwork;
+          cover.append(image);
+        }
+        const details = document.createElement("span");
+        details.className = "aura-queue-labels";
+        details.title = artist ? title + " · " + artist : title;
+        const name = document.createElement("strong");
+        name.textContent = title;
+        details.append(name);
+        if (artist) {
+          const byline = document.createElement("span");
+          byline.textContent = artist;
+          details.append(byline);
+        }
+        row.append(cover, details);
+        return row;
+      }));
+    }
+
     function syncTrack(track) {
       const changedTrack = current?.uri !== track?.uri;
       current = track;
       const { title, artist, album, artwork, primaryArtist } = trackDetails(current);
       lyricsTrack = current ? { uri: current.uri, title: current.name || current.metadata?.title || "", artist, primaryArtist, album } : null;
       updateText(ui.title, title);
+      updateText(ui.dockTitle, current ? title : "Nenhuma faixa");
       updateText(ui.artist, artist);
+      updateText(ui.dockArtist, artist);
       updateText(ui.album, album);
       ui.artist.hidden = !artist;
+      ui.dockArtist.hidden = !artist;
       ui.album.hidden = !album;
       ui.state.hidden = !current;
-      ui.previous.disabled = ui.play.disabled = ui.next.disabled = !current;
-      cover = artwork;
+      ui.previous.disabled = ui.play.disabled = ui.next.disabled = ui.like.disabled =
+        ui.shuffle.disabled = ui.repeat.disabled = !current;
+      if (cover !== artwork) {
+        cover = artwork;
+        ui.cover.crossOrigin = "anonymous";
+        syncAccent();
+      }
       showImage(ui.cover, cover);
+      showImage(ui.dockCover, cover);
       syncBackground();
       paintProgress();
       if (changedTrack) showControls();
@@ -363,12 +591,13 @@
 
     const playerEvents = ["songchange", "onplaypause", "onprogress"];
 
-    function onPlayerEvent() {
+    function onPlayerEvent(event) {
       lastPlayerEvent = performance.now();
-      syncProgress();
+      syncProgress(event?.type !== "onprogress");
     }
 
     function observePlayer() {
+      syncClock();
       const shouldListen = dialog.open && !document.hidden;
       if (shouldListen === listening) return;
       listening = shouldListen;
@@ -386,8 +615,60 @@
         playing = false;
         dialog.removeAttribute("data-playing");
         lyricsView?.clear();
+        resetParallax();
         showControls();
       }
+    }
+
+    function syncClock() {
+      clearTimeout(clockTimer);
+      ui.clock.hidden = !prefs.showClock;
+      if (!dialog.open || document.hidden || ui.clock.hidden) return;
+      const date = new Date();
+      updateText(ui.clockTime, timeFormat.format(date));
+      updateText(ui.clockDate, dateFormat.format(date));
+      clockTimer = setTimeout(syncClock, 60_000 - date.getTime() % 60_000 + 25);
+    }
+
+    function resetParallax() {
+      clearTimeout(pointerTimer);
+      pointerTimer = undefined;
+      ui.stage.style.removeProperty("--aura-drift-x");
+      ui.stage.style.removeProperty("--aura-drift-y");
+    }
+
+    function moveParallax(event) {
+      if (event.pointerType !== "mouse" || reducedMotion.matches || prefs.reduceMotion || !prefs.depth ||
+          !ui.settings.hidden || stacked.matches) return;
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+      if (pointerTimer !== undefined) return;
+      pointerTimer = setTimeout(() => {
+        pointerTimer = undefined;
+        const strength = prefs.depth / 100;
+        ui.stage.style.setProperty("--aura-drift-x", ((pointerX / dialog.clientWidth - .5) * 15 * strength).toFixed(2) + "px");
+        ui.stage.style.setProperty("--aura-drift-y", ((pointerY / dialog.clientHeight - .5) * 11 * strength).toFixed(2) + "px");
+      }, 40);
+    }
+
+    function applyVisualRanges(visual) {
+      dialog.style.setProperty("--aura-dim", visual.dim / 100);
+      dialog.style.setProperty("--aura-effect", visual.depth / 100);
+      dialog.style.setProperty("--aura-tilt", visual.depth * .2 + "deg");
+      dialog.style.setProperty("--aura-disc-scale", visual.discSize / 100);
+      dialog.style.setProperty("--aura-lyrics-scale", visual.lyricsSize / 100);
+      dialog.toggleAttribute("data-no-effects", visual.depth === 0);
+    }
+
+    function syncPanels() {
+      const below = prefs.lyricsPosition === "below";
+      const parent = below ? ui.scene : ui.side;
+      if (ui.lyrics.parentElement !== parent) parent.append(ui.lyrics);
+      const sideLyrics = !below && !ui.lyrics.hidden;
+      ui.queue.hidden = sideLyrics || !prefs.showQueue;
+      ui.side.hidden = ui.queue.hidden && !sideLyrics;
+      dialog.toggleAttribute("data-no-side", ui.side.hidden);
+      dialog.toggleAttribute("data-side-lyrics", sideLyrics);
     }
 
     function syncSettings() {
@@ -397,6 +678,17 @@
       ui.resetLyricsOffset.disabled = prefs.lyricsOffsetMs === 0;
       ui.backgroundChoice.textContent = prefs.background ? "Imagem local em uso" : "Capa do álbum em uso";
       ui.useCover.disabled = !prefs.background;
+      ui.colorMode.value = prefs.colorMode;
+      ui.accent.value = prefs.accent;
+      ui.accent.disabled = prefs.colorMode !== "manual";
+      ui.lyricsPosition.value = prefs.lyricsPosition;
+      for (const setting of VISUAL_TOGGLES) ui[setting].checked = prefs[setting];
+      for (const setting of Object.keys(VISUAL_RANGES)) paintRange(ui[setting], prefs[setting], prefs[setting] + "%");
+      dialog.toggleAttribute("data-reduced", prefs.reduceMotion);
+      applyVisualRanges(prefs);
+      syncAccent();
+      syncPanels();
+      syncClock();
       if (playbarButton) {
         const label = (prefs.modifiers === "ctrl-shift" ? "Ctrl+Shift+" : "Ctrl+Alt+") + prefs.key;
         playbarButton.label = "AURA · Modo imersivo (" + label + ")";
@@ -415,19 +707,23 @@
       }
       syncSettings();
       syncBackground();
-      if (dialog.open && !ui.lyrics.hidden) paintProgress();
+      showControls();
+      if (dialog.open) syncProgress(true);
     }
 
     function toggleLyrics() {
       const open = ui.lyrics.hidden;
       ui.lyrics.hidden = !open;
       ui.lyricsButton.setAttribute("aria-expanded", String(open));
-      dialog.toggleAttribute("data-lyrics", open);
+      ui.now.setAttribute("aria-pressed", String(!open));
+      syncPanels();
       showControls();
       if (!open) {
         lyricsView?.clear();
+        syncQueue(readPlayerState());
         return;
       }
+      if (stacked.matches || prefs.lyricsPosition === "below") ui.lyrics.scrollIntoView({ block: "nearest" });
       if (lyricsView) {
         paintProgress();
         return;
@@ -437,7 +733,7 @@
       status.textContent = "Carregando letras…";
       lyricsModule ??= import("./node_modules/aura-lyrics/view.mjs").then(({ createLyricsView }) => {
         if (lifetime.signal.aborted) return;
-        lyricsView = createLyricsView(ui.lyrics, lifetime.signal);
+        lyricsView = createLyricsView(ui.lyrics, lifetime.signal, () => prefs.reduceMotion);
         if (!ui.lyrics.hidden && dialog.open) paintProgress();
       }).catch(() => {
         status.textContent = "O módulo de letras não pôde ser carregado.";
@@ -452,6 +748,7 @@
       ui.settingsButton.setAttribute("aria-expanded", "true");
       dialog.setAttribute("aria-labelledby", "aura-settings-title");
       ui.shell.inert = true;
+      resetParallax();
       ui.settingsBack.focus();
       showControls();
     }
@@ -475,7 +772,12 @@
       drag = null;
       observePlayer();
       current = undefined;
+      cover = "";
+      syncAccent();
+      queueSignature = undefined;
+      ui.queueTracks.replaceChildren();
       showImage(ui.cover, "");
+      showImage(ui.dockCover, "");
       showImage(ui.background, "");
       updateText(ui.playerError, "");
     }
@@ -493,7 +795,18 @@
       observePlayer();
     }
 
+    function dismissView() {
+      if (ui.settings.hidden) closeView();
+      else closeSettings(true);
+    }
+
     function keyDown(event) {
+      if (dialog.open && event.key === "Escape" && !event.isComposing) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) dismissView();
+        return;
+      }
       if (event.repeat || event.isComposing || event.getModifierState("AltGraph")) return;
       const editing = event.target instanceof Element &&
         event.target.closest('input:not([type="range"]), textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]');
@@ -509,6 +822,7 @@
       updateText(ui.playerError, "");
       try {
         await action();
+        syncProgress(true);
       } catch {
         if (dialog.open) updateText(ui.playerError, "O Spotify não conseguiu executar esse controle.");
       }
@@ -553,25 +867,50 @@
     ui.play.addEventListener("click", () => control(() => player.togglePlay()), eventOptions);
     ui.previous.addEventListener("click", () => control(() => player.back()), eventOptions);
     ui.next.addEventListener("click", () => control(() => player.next()), eventOptions);
+    for (const [setting, method] of Object.entries({ like: "toggleHeart", mute: "toggleMute", repeat: "toggleRepeat", shuffle: "toggleShuffle" })) {
+      if (!ui[setting].hidden) ui[setting].addEventListener("click", () => control(() => player[method]()), eventOptions);
+    }
 
     ui.settingsButton.addEventListener("click", openSettings, eventOptions);
     ui.lyricsButton.addEventListener("click", toggleLyrics, eventOptions);
     ui.settingsBack.addEventListener("click", () => closeSettings(true), eventOptions);
     ui.exit.addEventListener("click", closeView, eventOptions);
-    for (const target of ["library", "search"]) {
-      ui[target].addEventListener("click", () => {
-        closeView();
-        try {
-          navigateNative(spicetify, target);
-        } catch {
-          spicetify.showNotification("Abra a Biblioteca ou a Busca pelos controles do Spotify.", true);
-        }
-      }, eventOptions);
+    ui.now.addEventListener("click", () => {
+      if (!ui.lyrics.hidden) toggleLyrics();
+      ui.title.focus();
+    }, eventOptions);
+    function openNative(target, query) {
+      closeView();
+      try {
+        navigateNative(spicetify, target, query);
+      } catch {
+        spicetify.showNotification("Abra a Biblioteca ou a Busca pelos controles do Spotify.", true);
+      }
     }
+    ui.library.addEventListener("click", () => openNative("library"), eventOptions);
+    ui.favorites.addEventListener("click", () => openNative("favorites"), eventOptions);
+    ui.searchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const query = ui.query.value.trim();
+      ui.query.value = "";
+      openNative("search", query);
+    }, eventOptions);
 
-    for (const setting of ["modifiers", "key"]) {
+    for (const setting of ["modifiers", "key", "colorMode", "lyricsPosition", "accent"]) {
       ui[setting].addEventListener("change", () => savePreferences({ [setting]: ui[setting].value }), eventOptions);
     }
+    for (const setting of VISUAL_TOGGLES) {
+      ui[setting].addEventListener("change", () => savePreferences({ [setting]: ui[setting].checked }), eventOptions);
+    }
+    for (const setting of Object.keys(VISUAL_RANGES)) {
+      const slider = ui[setting];
+      slider.addEventListener("input", () => {
+        paintRange(slider, slider.valueAsNumber, slider.value + "%");
+        applyVisualRanges({ ...prefs, [setting]: slider.valueAsNumber });
+      }, eventOptions);
+      slider.addEventListener("change", () => savePreferences({ [setting]: slider.valueAsNumber }), eventOptions);
+    }
+    ui.resetVisual.addEventListener("click", () => savePreferences(VISUAL_DEFAULTS), eventOptions);
     ui.lyricsOffset.addEventListener("change", () => {
       const offset = ui.lyricsOffset.valueAsNumber;
       savePreferences({ lyricsOffsetMs: Number.isFinite(offset) ? Math.round(Math.max(-5000, Math.min(5000, offset))) : 0 });
@@ -604,10 +943,26 @@
       }
     }, eventOptions);
 
-    for (const image of [ui.cover, ui.background]) {
+    for (const image of [ui.cover, ui.dockCover, ui.background]) {
       image.addEventListener("load", () => { image.hidden = image.currentSrc !== image.src; }, eventOptions);
     }
-    ui.cover.addEventListener("error", () => { ui.cover.hidden = true; }, eventOptions);
+    ui.cover.addEventListener("load", () => {
+      if (ui.cover.hidden || accents.has(cover) || !ui.cover.crossOrigin) return;
+      try {
+        if (accents.size >= 32) accents.delete(accents.keys().next().value);
+        accents.set(cover, coverAccent(ui.cover));
+        syncAccent();
+      } catch { /* Some artwork hosts don't allow reading their image pixels. */ }
+    }, eventOptions);
+    ui.cover.addEventListener("error", () => {
+      ui.cover.hidden = true;
+      if (cover && ui.cover.crossOrigin && ui.cover.getAttribute("src") === cover) {
+        ui.cover.removeAttribute("src");
+        ui.cover.removeAttribute("crossorigin");
+        showImage(ui.cover, cover);
+      }
+    }, eventOptions);
+    ui.dockCover.addEventListener("error", () => { ui.dockCover.hidden = true; }, eventOptions);
     ui.background.addEventListener("error", () => {
       if (prefs.background && ui.background.getAttribute("src") === prefs.background) {
         prefs = { ...prefs, background: null };
@@ -617,8 +972,7 @@
 
     dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
-      if (ui.settings.hidden) closeView();
-      else closeSettings(true);
+      dismissView();
     }, eventOptions);
     dialog.addEventListener("close", () => {
       if (!dialog.open) closeView();
@@ -626,6 +980,10 @@
     for (const event of ["pointermove", "pointerdown", "keydown", "focusin"]) {
       dialog.addEventListener(event, showControls, eventOptions);
     }
+    dialog.addEventListener("pointermove", moveParallax, { ...eventOptions, passive: true });
+    dialog.addEventListener("pointerleave", resetParallax, eventOptions);
+    reducedMotion.addEventListener("change", resetParallax, eventOptions);
+    stacked.addEventListener("change", resetParallax, eventOptions);
     window.addEventListener("pointerup", clearDrag, { ...eventOptions, capture: true });
     window.addEventListener("pointercancel", clearDrag, { ...eventOptions, capture: true });
     window.addEventListener("keydown", keyDown, { ...eventOptions, capture: true });

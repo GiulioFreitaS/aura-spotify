@@ -52,7 +52,7 @@ function lyricRow(line) {
   return { row, words };
 }
 
-export function createLyricsView(panel, signal) {
+export function createLyricsView(panel, signal, motionDisabled = () => false) {
   const service = createLyricsService();
   const ui = Object.fromEntries([...panel.querySelectorAll("[data-lyrics]")].map(
     (node) => [node.dataset.lyrics, node],
@@ -129,10 +129,9 @@ export function createLyricsView(panel, signal) {
 
     const firstActive = Math.min(...nextActive);
     if (!Number.isFinite(firstActive) || firstActive === lastCentered || performance.now() < manualScrollUntil) return;
-    const scrollBox = ui.scroll.getBoundingClientRect();
-    const lineBox = rows[firstActive].row.getBoundingClientRect();
-    const top = ui.scroll.scrollTop + lineBox.top - scrollBox.top - (scrollBox.height - lineBox.height) / 2;
-    ui.scroll.scrollTo({ top, behavior: reducedMotion.matches ? "instant" : "smooth" });
+    const row = rows[firstActive].row;
+    const top = row.offsetTop - (ui.scroll.clientHeight - row.offsetHeight) / 2;
+    ui.scroll.scrollTo({ top, behavior: reducedMotion.matches || motionDisabled() ? "instant" : "smooth" });
     lastCentered = firstActive;
   }
 

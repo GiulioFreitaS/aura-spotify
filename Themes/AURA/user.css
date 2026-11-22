@@ -1,10 +1,16 @@
 #aura-immersive {
   --aura-theme: 1;
-  --aura-ink: #120f17;
-  --aura-paper: #f9f3ed;
-  --aura-muted: #ddd2de;
-  --aura-accent: #f4d8a5;
-  --aura-line: rgb(255 244 251 / 16%);
+  --aura-accent-color: #dba581;
+  --aura-accent: color-mix(in srgb, var(--aura-accent-color) 49%, #fff0db);
+  --aura-paper: #fff8ef;
+  --aura-muted: #ded4d1;
+  --aura-ink: #211719;
+  --aura-line: rgb(255 243 232 / 17%);
+  --aura-dim: .32;
+  --aura-effect: .72;
+  --aura-tilt: 14.4deg;
+  --aura-disc-scale: 1;
+  --aura-lyrics-scale: 1;
   position: fixed;
   inset: 0;
   box-sizing: border-box;
@@ -16,8 +22,9 @@
   padding: 0;
   overflow: auto;
   overscroll-behavior: contain;
+  scroll-padding-block-end: 10rem;
   border: 0;
-  background: #100e17;
+  background: #141118;
   color: var(--aura-paper);
   color-scheme: dark;
   font: 400 1rem/1.45 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
@@ -26,46 +33,58 @@
 
 #aura-immersive:not([open]), #aura-immersive [hidden] { display: none !important; }
 #aura-immersive *, #aura-immersive *::before, #aura-immersive *::after { box-sizing: border-box; }
+#aura-immersive :is(button, input, select, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--aura-accent);
+  outline-offset: 3px;
+}
+#aura-immersive .aura-title:focus-visible { outline-offset: 7px; }
 
 #aura-immersive .aura-background {
   position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  background: radial-gradient(ellipse at 24% 46%, #483147, #211a2d 46%, #100e17 82%);
+  background:
+    radial-gradient(ellipse at 38% 24%, color-mix(in srgb, var(--aura-accent-color) 34%, #211d29), transparent 77%),
+    #15131a;
 }
 
 #aura-immersive .aura-background img {
   position: absolute;
-  inset: -7%;
-  width: 114%;
-  height: 114%;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
   object-fit: cover;
-  opacity: .73;
-  filter: blur(34px) saturate(.88);
+  opacity: .81;
+  filter: blur(46px) saturate(.87);
 }
 
 #aura-immersive[data-local-background] .aura-background img {
-  filter: blur(5px) saturate(.88);
+  inset: -1%;
+  width: 102%;
+  height: 102%;
+  opacity: 1;
+  filter: blur(3px) saturate(.9);
 }
 
 #aura-immersive .aura-background::after {
   position: absolute;
   inset: 0;
-  content: "";
   background:
-    linear-gradient(0deg, rgb(11 9 17 / 82%), transparent 36%, transparent 72%, rgb(11 9 17 / 61%)),
-    linear-gradient(90deg, rgb(15 12 22 / 14%), rgb(15 12 22 / 68%) 60%, rgb(15 12 22 / 88%));
+    linear-gradient(rgb(13 10 16 / var(--aura-dim)), rgb(13 10 16 / var(--aura-dim))),
+    radial-gradient(ellipse at 47% 42%, transparent 21%, rgb(17 13 19 / 46%) 100%),
+    linear-gradient(180deg, rgb(17 13 21 / 46%), transparent 28%, transparent 60%, rgb(13 10 17 / 77%));
+  content: "";
 }
 
 #aura-immersive .aura-shell {
   position: relative;
   display: grid;
-  grid-template-rows: auto 1fr;
-  width: min(100%, 90rem);
-  min-height: 100%;
+  grid-template-rows: auto 1fr auto;
+  width: min(100%, 106rem);
+  min-block-size: 100%;
   margin-inline: auto;
-  padding-inline: clamp(1rem, 5vw, 5rem);
+  padding-inline: clamp(1.45rem, 4vw, 4.5rem);
 }
 
 #aura-immersive .aura-header {
@@ -73,144 +92,314 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: .25rem 1rem;
-  min-height: 4.5rem;
-  padding-block: .5rem;
+  gap: .5rem 1rem;
+  min-block-size: 5rem;
+  padding: 1.7rem clamp(0rem, calc(8.7rem - 4vw), 6rem) .65rem 0;
   border-bottom: 1px solid var(--aura-line);
 }
 
 #aura-immersive .aura-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: .7rem;
-  font-size: .84rem;
+  gap: .8rem;
+  font-size: .88rem;
   font-weight: 650;
-  letter-spacing: .2em;
+  letter-spacing: .32em;
 }
 
 #aura-immersive .aura-wordmark::before {
-  width: 1.2rem;
+  width: 1.95rem;
   aspect-ratio: 1;
   border: 1px solid var(--aura-accent);
   border-radius: 50%;
-  background: radial-gradient(circle, var(--aura-accent) 0 12%, transparent 15% 48%, var(--aura-accent) 51% 57%, transparent 60%);
+  background: radial-gradient(circle, var(--aura-accent) 0 10%, transparent 13% 34%, rgb(255 246 232 / 31%) 37% 40%, transparent 43% 60%, rgb(255 246 232 / 31%) 63% 66%, transparent 70%);
+  box-shadow: 0 0 1rem color-mix(in srgb, var(--aura-accent-color) 28%, transparent);
   content: "";
-}
-
-#aura-immersive .aura-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .125rem .35rem;
 }
 
 #aura-immersive button, #aura-immersive select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .45rem;
-  min-block-size: 2.75rem;
-  padding: .4rem .75rem;
+  gap: .55rem;
+  min-block-size: 2.55rem;
+  padding: .45rem .8rem;
   border: 1px solid transparent;
-  border-radius: .55rem;
+  border-radius: .85rem;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
 }
 
-#aura-immersive button:hover:not(:disabled) { background: rgb(255 246 255 / 10%); }
-#aura-immersive button:disabled { opacity: .42; cursor: default; }
-#aura-immersive :is(button, input, select):focus-visible {
-  outline: 2px solid var(--aura-accent);
-  outline-offset: 3px;
+#aura-immersive button:hover:not(:disabled) { background: rgb(255 247 237 / 12%); }
+#aura-immersive button:disabled { opacity: .43; cursor: default; }
+#aura-immersive .aura-icon { display: inline-flex; align-items: center; justify-content: center; inline-size: 1rem; flex: 0 0 auto; }
+#aura-immersive .aura-icon svg { display: block; width: 1rem; height: 1rem; fill: currentColor; }
+
+#aura-immersive .aura-header-actions {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
 }
 
-#aura-immersive .aura-icon { display: inline-flex; flex: 0 0 auto; }
-#aura-immersive .aura-icon svg { display: block; width: 1.05rem; height: 1.05rem; fill: currentColor; }
-#aura-immersive .aura-nav button { font-size: .86rem; }
-#aura-immersive .aura-nav button[aria-expanded="true"] { color: var(--aura-accent); }
-#aura-immersive .aura-exit { background: rgb(14 11 19 / 32%); border-color: var(--aura-line); }
-#aura-immersive kbd { color: var(--aura-muted); font: 500 .7rem/1 "Segoe UI", sans-serif; }
+#aura-immersive .aura-header-actions button {
+  padding-inline: .95rem;
+  border-radius: 999px;
+  font-size: .84rem;
+}
+
+#aura-immersive .aura-header-actions .aura-exit {
+  border-color: var(--aura-line);
+  background: rgb(22 17 25 / 48%);
+}
+
+#aura-immersive kbd {
+  padding: .22rem .34rem;
+  border: 1px solid rgb(255 246 235 / 13%);
+  border-radius: .3rem;
+  color: var(--aura-muted);
+  font: 500 .67rem/1 "Segoe UI", sans-serif;
+}
 
 #aura-immersive .aura-stage {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  grid-template-columns: minmax(10rem, .79fr) minmax(0, 2.89fr) minmax(12.5rem, 1fr);
+  align-self: center;
+  align-items: center;
+  gap: clamp(.65rem, 1.3vw, 1.5rem);
+  min-inline-size: 0;
+  margin-block: clamp(1.25rem, 4.1vh, 3.7rem);
+  perspective: 1150px;
+}
+
+#aura-immersive[data-side-lyrics] .aura-stage {
+  grid-template-columns: minmax(10rem, .79fr) minmax(0, 2.65fr) minmax(14rem, 1.32fr);
+}
+
+#aura-immersive[data-no-side] .aura-stage {
+  grid-template-columns: minmax(10rem, .79fr) minmax(0, 3.89fr);
+}
+
+#aura-immersive .aura-glass {
+  min-inline-size: 0;
+  border: 1px solid var(--aura-line);
+  border-radius: 1.45rem;
+  background:
+    linear-gradient(145deg, rgb(244 226 207 / 14%), transparent 65%),
+    rgb(24 20 27 / 73%);
+  box-shadow: 0 1.4rem 3.6rem rgb(7 5 10 / 39%), inset 0 1px rgb(255 246 236 / 10%);
+  backdrop-filter: blur(23px) saturate(1.13);
+}
+
+#aura-immersive .aura-wing {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  min-block-size: clamp(20rem, 47vh, 31.5rem);
+  padding: clamp(.8rem, 1.4vw, 1.45rem);
+}
+
+#aura-immersive .aura-wing-left { transform: rotateY(var(--aura-tilt)); }
+#aura-immersive .aura-wing-right { transform: rotateY(calc(-1 * var(--aura-tilt))); }
+
+#aura-immersive .aura-wing::after {
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(6 4 10 / 24%);
+  opacity: var(--aura-effect);
+  pointer-events: none;
+  content: "";
+}
+
+#aura-immersive .aura-search {
+  display: flex;
+  align-items: center;
+  gap: .1rem;
+  min-inline-size: 0;
+  margin-block-end: clamp(.9rem, 2.1vh, 1.7rem);
+  padding-inline-end: .45rem;
+  border: 1px solid rgb(255 244 234 / 13%);
+  border-radius: .85rem;
+  background: rgb(14 10 17 / 32%);
+}
+
+#aura-immersive .aura-search:focus-within { border-color: var(--aura-accent); }
+#aura-immersive .aura-search button { flex: 0 0 2.25rem; padding: 0; color: var(--aura-muted); }
+#aura-immersive .aura-search input {
+  width: 100%;
+  min-inline-size: 0;
+  min-block-size: 2.45rem;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--aura-paper);
+  font: inherit;
+  font-size: .85rem;
+}
+#aura-immersive .aura-search input::placeholder { color: var(--aura-muted); opacity: 1; }
+
+#aura-immersive .aura-nav { display: grid; gap: .28rem; }
+
+#aura-immersive .aura-nav button {
+  justify-content: flex-start;
+  min-inline-size: 0;
+  padding: .65rem .75rem;
+  color: var(--aura-muted);
+  font-size: .9rem;
+  text-align: start;
+}
+
+#aura-immersive .aura-nav :is([aria-pressed="true"], [aria-expanded="true"]) {
+  border-color: rgb(255 244 234 / 15%);
+  background: color-mix(in srgb, var(--aura-accent-color) 20%, rgb(255 246 237 / 6%));
+  color: var(--aura-paper);
+}
+
+#aura-immersive .aura-nav :is([aria-pressed="true"], [aria-expanded="true"]) .aura-icon { color: var(--aura-accent); }
+
+#aura-immersive .aura-clock {
+  display: grid;
+  gap: .35rem;
+  margin-block-start: auto;
+  padding: clamp(1.25rem, 4vh, 3.25rem) .3rem .15rem;
+  color: var(--aura-muted);
+  font-size: .82rem;
+  line-height: 1.3;
+}
+
+#aura-immersive .aura-clock time {
+  color: var(--aura-paper);
+  font-size: clamp(1.85rem, 3vw, 3.5rem);
+  font-weight: 320;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.065em;
+  line-height: .98;
+}
+
+#aura-immersive .aura-clock span::first-letter { text-transform: uppercase; }
+
+#aura-immersive .aura-scene {
+  position: relative;
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(ellipse at 22% 40%, color-mix(in srgb, var(--aura-accent-color) 22%, transparent), transparent 67%),
+    linear-gradient(145deg, rgb(240 220 203 / 12%), transparent 54%),
+    rgb(23 18 26 / 73%);
+}
+
+#aura-immersive .aura-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: center;
   align-content: center;
-  gap: clamp(1.5rem, 6vw, 6.5rem);
-  padding-block: clamp(1.5rem, 8vh, 6rem);
+  gap: clamp(1.1rem, 2.65vw, 3rem);
+  min-inline-size: 0;
+  min-block-size: clamp(23rem, 54vh, 37rem);
+  padding: clamp(1.1rem, 2.8vw, 3.6rem);
+}
+
+#aura-immersive .aura-turntable {
+  position: relative;
+  justify-self: center;
+  width: min(calc(91% * var(--aura-disc-scale)), calc(28rem * var(--aura-disc-scale)), calc(51vh * var(--aura-disc-scale)));
+  aspect-ratio: 1;
+  isolation: isolate;
+  transform: translate(var(--aura-drift-x, 0px), var(--aura-drift-y, 0px));
+  transition: transform 350ms ease-out;
+}
+
+#aura-immersive .aura-turntable::before {
+  position: absolute;
+  z-index: -1;
+  inset: -13%;
+  border: 1px solid rgb(255 245 237 / 16%);
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 61%, color-mix(in srgb, var(--aura-accent-color) 26%, transparent) 77%, transparent 96%);
+  opacity: var(--aura-effect);
+  content: "";
 }
 
 #aura-immersive .aura-record {
-  justify-self: center;
   position: relative;
-  width: min(100%, 29rem, 63vh);
-  aspect-ratio: 1;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  background: #100f16;
-  box-shadow: 0 0 0 1px rgb(255 247 255 / 18%), 0 1.9rem 5rem rgb(4 2 9 / 65%);
+  background: #15131a;
+  box-shadow:
+    0 0 0 1px rgb(246 235 226 / 38%), 0 0 0 4px rgb(18 14 21 / 68%),
+    0 1.45rem 3.1rem rgb(8 5 10 / 67%);
 }
 
 #aura-immersive .aura-disc {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   border-radius: inherit;
   background:
-    repeating-radial-gradient(circle, transparent 0 3px, rgb(0 0 0 / 38%) 4px, rgb(217 211 227 / 12%) 5px, transparent 6px 7px),
-    radial-gradient(circle, transparent 65%, rgb(207 198 221 / 23%) 69%, #121017 70%),
-    conic-gradient(from 218deg, #111017 0deg, #454150 26deg, #15131c 70deg, #0e0c14 146deg, #32303b 193deg, #14121a 247deg, #100e17 360deg);
+    repeating-radial-gradient(circle, transparent 0 3px, rgb(0 0 0 / 39%) 4px, rgb(217 211 227 / 13%) 5px, transparent 6px 7px),
+    conic-gradient(from 208deg, #131119, #484550 34deg, #16131c 75deg, #0f0d14 162deg, #38353f 208deg, #18161e 271deg, #131119);
   animation: aura-vinyl-rotation 24s linear infinite paused;
 }
 
 #aura-immersive[data-playing] .aura-disc { animation-play-state: running; }
 @keyframes aura-vinyl-rotation { to { transform: rotate(1turn); } }
 
-#aura-immersive .aura-label {
+#aura-immersive .aura-record::after {
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  border-radius: 50%;
+  border-radius: inherit;
+  background: conic-gradient(from 218deg, transparent 0 2%, rgb(255 247 235 / 20%) 8%, transparent 18% 46%, rgb(251 235 210 / 13%) 55%, transparent 63%);
+  box-shadow: inset 0 0 0 2px rgb(255 251 242 / 11%), inset 0 0 20px rgb(17 13 21 / 42%);
+  opacity: calc(.45 + var(--aura-effect) * .55);
+  pointer-events: none;
+  content: "";
 }
 
+#aura-immersive[data-playing]:not([data-no-effects]) .aura-turntable::before { animation: aura-decorative-glow 6.4s ease-in-out infinite alternate; }
+@keyframes aura-decorative-glow { to { opacity: calc(var(--aura-effect) * .54); } }
+
+#aura-immersive .aura-label { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
 #aura-immersive .aura-label:has(img[hidden]) {
   inset: 28%;
-  background: radial-gradient(circle, #201724 0 3%, transparent 4%),
-    repeating-radial-gradient(circle, #574355 0 15%, #4f3b4d 16% 18%, #574355 19% 30%);
-  box-shadow: 0 0 0 2px rgb(8 5 13 / 78%), 0 0 0 3px rgb(255 239 255 / 16%);
+  background: radial-gradient(circle, #1c161c 0 3%, transparent 4%),
+    repeating-radial-gradient(circle, #5e4947 0 15%, #503c40 16% 18%, #5e4947 19% 30%);
+  box-shadow: 0 0 0 2px rgb(8 5 13 / 78%), 0 0 0 3px rgb(255 239 235 / 16%);
 }
 
 #aura-immersive .aura-label img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
 #aura-immersive .aura-label::after {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: repeating-radial-gradient(circle, transparent 0 7px, rgb(13 10 18 / 15%) 8px, transparent 9px);
-  box-shadow: inset 0 0 0 2px rgb(13 10 18 / 58%), inset 0 0 1.5rem rgb(13 10 18 / 28%);
   content: "";
 }
 
-#aura-immersive .aura-label:has(img[hidden])::after {
-  inset: 47.5%;
-  border: 1px solid rgb(255 239 255 / 28%);
-  background: #110e16;
-  box-shadow: none;
-}
+#aura-immersive .aura-track { min-inline-size: 0; }
 
-#aura-immersive .aura-track { min-width: 0; }
 #aura-immersive .aura-playback-state {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: .55rem;
-  margin: 0 0 .85rem;
+  gap: .6rem;
+  margin: 0 0 .9rem;
+  padding: .36rem .65rem;
+  border: 1px solid rgb(255 242 230 / 16%);
+  border-radius: 999px;
+  background: rgb(15 12 18 / 24%);
   color: var(--aura-muted);
-  font-size: .875rem;
-  font-weight: 550;
+  font-size: .73rem;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 #aura-immersive .aura-playback-state::before {
-  width: .42rem;
-  height: .42rem;
+  width: .38rem;
+  height: .38rem;
   border: 1px solid currentColor;
   border-radius: 50%;
   content: "";
@@ -219,40 +408,151 @@
 #aura-immersive[data-playing] .aura-playback-state::before {
   border-color: var(--aura-accent);
   background: var(--aura-accent);
+  box-shadow: 0 0 .7rem var(--aura-accent-color);
 }
 
 #aura-immersive .aura-title {
   margin: 0;
   color: var(--aura-paper);
-  font: 400 clamp(2.25rem, 5.65vw, 5.7rem)/.98 Georgia, Cambria, serif;
-  letter-spacing: -.055em;
+  font: 400 clamp(2.4rem, 4.65vw, 5.65rem)/.99 Georgia, Cambria, serif;
+  letter-spacing: -.068em;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 #aura-immersive .aura-artist, #aura-immersive .aura-album { margin: 0; overflow-wrap: anywhere; }
-#aura-immersive .aura-artist { margin-top: 1.1rem; font-size: clamp(1.02rem, 1.65vw, 1.35rem); }
-#aura-immersive .aura-album { margin-top: .2rem; color: var(--aura-muted); font-size: .9rem; }
+#aura-immersive .aura-artist { margin-top: .9rem; font-size: clamp(1rem, 1.45vw, 1.36rem); font-weight: 550; }
+#aura-immersive .aura-album { margin-top: .22rem; color: var(--aura-muted); font-size: clamp(.8rem, 1.1vw, .96rem); }
 
-#aura-immersive .aura-controls {
-  margin-top: clamp(1.25rem, 4.1vh, 2.5rem);
-  padding: .65rem clamp(.65rem, 1.9vw, 1.25rem) .9rem;
-  border: 1px solid var(--aura-line);
-  border-radius: 1rem;
-  background: rgb(19 15 25 / 64%);
-  box-shadow: 0 .7rem 2rem rgb(5 3 9 / 20%);
-  backdrop-filter: blur(12px);
+#aura-immersive .aura-queue h2, #aura-immersive .aura-lyrics h2 {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin: 0;
+  font-size: .99rem;
+  font-weight: 650;
+  letter-spacing: -.018em;
 }
 
-#aura-immersive .aura-chrome { transition: opacity 240ms ease; }
-#aura-immersive[data-idle] .aura-chrome:not(:has(:focus-visible)) { opacity: 0; pointer-events: none; }
+#aura-immersive :is(.aura-queue, .aura-lyrics) h2 .aura-icon { color: var(--aura-accent); }
+#aura-immersive .aura-queue-empty { margin: 1.1rem 0 0; color: var(--aura-muted); font-size: .86rem; }
+#aura-immersive .aura-queue-tracks {
+  display: grid;
+  gap: .28rem;
+  margin: .85rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+#aura-immersive .aura-queue-tracks li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: .6rem;
+  min-inline-size: 0;
+  min-block-size: 3rem;
+  padding: .3rem;
+  border: 1px solid transparent;
+  border-radius: .85rem;
+}
+
+#aura-immersive .aura-queue-tracks li:first-child {
+  min-block-size: 4.3rem;
+  padding: .45rem;
+  border-color: rgb(255 245 234 / 12%);
+  background: linear-gradient(125deg, color-mix(in srgb, var(--aura-accent-color) 22%, transparent), rgb(255 245 234 / 3%));
+}
+
+#aura-immersive .aura-queue-cover, #aura-immersive .aura-dock-cover {
+  display: block;
+  width: 2.5rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: .57rem;
+  background:
+    radial-gradient(circle, transparent 20%, rgb(255 244 235 / 21%) 22% 24%, transparent 26% 47%, rgb(255 244 235 / 15%) 49% 52%, transparent 54%),
+    color-mix(in srgb, var(--aura-accent-color) 24%, #1d1821);
+}
+
+#aura-immersive .aura-queue-tracks li:first-child .aura-queue-cover { width: 3.2rem; }
+#aura-immersive :is(.aura-queue-cover, .aura-dock-cover) img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#aura-immersive .aura-queue-labels, #aura-immersive .aura-dock-labels { display: grid; min-inline-size: 0; }
+
+#aura-immersive :is(.aura-queue-labels, .aura-dock-labels) > * {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#aura-immersive .aura-queue-labels strong, #aura-immersive .aura-dock-labels > :first-child { font-size: .85rem; font-weight: 650; }
+#aura-immersive .aura-queue-labels span, #aura-immersive .aura-dock-labels > :last-child { color: var(--aura-muted); font-size: .75rem; }
+
+#aura-immersive .aura-dock {
+  position: sticky;
+  z-index: 2;
+  inset-block-end: .85rem;
+  display: grid;
+  grid-template-columns: minmax(9.5rem, 1fr) minmax(13rem, 2.1fr) minmax(6.5rem, .81fr);
+  grid-template-areas: "track actions volume" "track timeline volume";
+  align-items: center;
+  justify-self: center;
+  gap: 0 clamp(.55rem, 2vw, 2rem);
+  width: min(100%, 63rem);
+  margin-block-end: clamp(.85rem, 3.6vh, 3.25rem);
+  padding: .5rem clamp(.7rem, 2vw, 1.4rem);
+  border-radius: 1.45rem;
+  background:
+    linear-gradient(120deg, rgb(249 229 206 / 13%), transparent 83%),
+    rgb(25 20 28 / 87%);
+}
+
+#aura-immersive .aura-dock-track, #aura-immersive .aura-actions, #aura-immersive .aura-volume { display: flex; align-items: center; }
+#aura-immersive .aura-dock-track { grid-area: track; gap: clamp(.35rem, .8vw, .8rem); min-inline-size: 0; }
+#aura-immersive .aura-dock-cover { flex: 0 0 auto; width: clamp(2.35rem, 3.25vw, 3.2rem); }
+#aura-immersive .aura-dock-labels { flex: 1 1 auto; }
+#aura-immersive .aura-dock-labels > [data-aura="dockTitle"] { color: var(--aura-paper); }
+#aura-immersive .aura-actions { grid-area: actions; justify-content: center; gap: clamp(.14rem, .55vw, .5rem); }
+#aura-immersive .aura-volume { grid-area: volume; gap: .35rem; min-inline-size: 0; color: var(--aura-muted); }
+
+#aura-immersive .aura-dock button {
+  flex: 0 0 auto;
+  position: relative;
+  width: 2.25rem;
+  min-block-size: 2.25rem;
+  padding: 0;
+  border-radius: 50%;
+}
+
+#aura-immersive .aura-dock button[aria-pressed="true"] { color: var(--aura-accent); }
+
+#aura-immersive .aura-actions button[aria-pressed="true"]::after {
+  position: absolute;
+  inset-block-end: .13rem;
+  width: .22rem;
+  height: .22rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+#aura-immersive button.aura-play {
+  width: 2.85rem;
+  height: 2.85rem;
+  background: var(--aura-accent);
+  box-shadow: inset 0 0 0 1px rgb(255 251 243 / 32%), 0 .25rem 1rem color-mix(in srgb, var(--aura-accent-color) 23%, transparent);
+  color: var(--aura-ink);
+}
+
+#aura-immersive button.aura-play:hover:not(:disabled) { background: color-mix(in srgb, var(--aura-accent) 65%, #fff8ed); }
 
 #aura-immersive .aura-timeline {
+  grid-area: timeline;
   display: grid;
-  grid-template-columns: minmax(3rem, auto) minmax(1.25rem, 1fr) minmax(3rem, auto);
+  grid-template-columns: 2.55rem minmax(1rem, 1fr) 2.55rem;
   align-items: center;
-  gap: .55rem;
+  gap: .45rem;
   color: var(--aura-muted);
-  font-size: .78rem;
+  font-size: .76rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -262,55 +562,39 @@
   --aura-level: 0%;
   appearance: none;
   width: 100%;
-  height: 1.9rem;
+  min-width: 0;
+  height: 1.55rem;
   margin: 0;
   border-radius: .25rem;
-  background: linear-gradient(90deg, var(--aura-accent) var(--aura-level), rgb(255 243 252 / 28%) var(--aura-level)) center / 100% 3px no-repeat;
+  background: linear-gradient(90deg, var(--aura-accent) var(--aura-level), rgb(255 244 234 / 26%) var(--aura-level)) center / 100% 3px no-repeat;
   cursor: pointer;
 }
 
 #aura-immersive .aura-range::-webkit-slider-thumb {
   appearance: none;
-  width: .68rem;
-  height: .68rem;
+  width: .65rem;
+  height: .65rem;
   border: 0;
   border-radius: 50%;
   background: var(--aura-accent);
 }
 
-#aura-immersive .aura-range:disabled { opacity: .44; cursor: default; }
-#aura-immersive .aura-transport, #aura-immersive .aura-actions, #aura-immersive .aura-volume { display: flex; align-items: center; }
-#aura-immersive .aura-transport { flex-wrap: wrap; justify-content: space-between; gap: .35rem .75rem; }
-#aura-immersive .aura-actions { gap: .25rem; }
-#aura-immersive .aura-actions button { width: 2.75rem; padding: 0; border-radius: 50%; }
-#aura-immersive button.aura-play { width: 3rem; height: 3rem; background: var(--aura-accent); color: var(--aura-ink); }
-#aura-immersive button.aura-play:hover:not(:disabled) { background: #ffe9c3; }
-#aura-immersive .aura-volume { gap: .55rem; width: clamp(4rem, 12vw, 8rem); color: var(--aura-muted); }
+#aura-immersive .aura-range:disabled { opacity: .43; cursor: default; }
+#aura-immersive .aura-player-error { grid-column: 1 / -1; margin: .35rem 0 0; color: var(--aura-muted); font-size: .83rem; }
+#aura-immersive .aura-player-error:empty { position: absolute; margin: 0; }
 
-#aura-immersive .aura-player-error, #aura-immersive .aura-setting-status { margin: .65rem 0 0; color: var(--aura-muted); font-size: .84rem; }
-#aura-immersive .aura-player-error:empty, #aura-immersive .aura-setting-status:empty { margin: 0; }
-
-#aura-immersive[data-lyrics] .aura-stage {
-  grid-template-columns: minmax(0, .84fr) minmax(0, 1.16fr);
-  grid-template-areas: "record lyrics" "track lyrics";
-  row-gap: 1.4rem;
-  padding-block: clamp(1.5rem, 5vh, 4rem);
-}
-
-#aura-immersive[data-lyrics] .aura-record { grid-area: record; width: min(100%, 16rem, 32vh); }
-#aura-immersive[data-lyrics] .aura-track { grid-area: track; width: min(100%, 31rem); justify-self: center; text-align: center; }
-#aura-immersive[data-lyrics] .aura-title { font-size: clamp(1.75rem, 3.4vw, 3.5rem); }
-#aura-immersive[data-lyrics] .aura-playback-state { justify-content: center; margin-bottom: .65rem; }
-#aura-immersive[data-lyrics] .aura-artist { margin-top: .6rem; }
-#aura-immersive[data-lyrics] .aura-controls { margin-top: 1.15rem; text-align: start; }
+#aura-immersive .aura-chrome { transition: opacity 240ms ease; }
+#aura-immersive[data-idle] .aura-chrome:not(:has(:focus-visible)) { opacity: 0; pointer-events: none; }
 
 #aura-immersive .aura-lyrics {
-  grid-area: lyrics;
   min-inline-size: 0;
-  align-self: center;
-  min-block-size: min(52vh, 28rem);
-  padding-inline-start: clamp(1rem, 3.7vw, 3.5rem);
-  border-inline-start: 1px solid var(--aura-line);
+  min-block-size: 0;
+}
+
+#aura-immersive .aura-scene > .aura-lyrics {
+  margin-inline: clamp(1.1rem, 2.8vw, 3.6rem);
+  padding-block: 1.15rem 1.35rem;
+  border-block-start: 1px solid var(--aura-line);
 }
 
 #aura-immersive .aura-lyrics-header {
@@ -318,43 +602,43 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: .4rem 1rem;
+  gap: .4rem .7rem;
   margin-block-end: .85rem;
 }
 
-#aura-immersive .aura-lyrics-header h2 { margin: 0; font-size: .97rem; font-weight: 650; }
-#aura-immersive .aura-lyrics-meta { display: flex; gap: .65rem; margin: 0; color: var(--aura-muted); font-size: .82rem; }
+#aura-immersive .aura-lyrics-meta { display: flex; flex-wrap: wrap; gap: .3rem .65rem; margin: 0; color: var(--aura-muted); font-size: .75rem; }
 #aura-immersive .aura-lyrics-meta a { color: var(--aura-accent); text-decoration: underline; text-underline-offset: .18em; }
-#aura-immersive .aura-lyrics-meta a:focus-visible, #aura-immersive .aura-lyrics-scroll:focus-visible {
-  outline: 2px solid var(--aura-accent);
-  outline-offset: 3px;
-}
-#aura-immersive .aura-lyrics-status { margin: 1rem 0; color: var(--aura-muted); }
-#aura-immersive button.aura-lyrics-retry { border-color: var(--aura-line); }
+#aura-immersive .aura-lyrics-status { margin: 1rem 0; color: var(--aura-muted); font-size: .9rem; }
+#aura-immersive button.aura-lyrics-retry { border-color: var(--aura-line); font-size: .85rem; }
 
 #aura-immersive .aura-lyrics-scroll {
-  block-size: clamp(12rem, 54vh, 38rem);
+  position: relative;
+  block-size: clamp(14rem, 43vh, 29rem);
   overflow: auto;
   overscroll-behavior: contain;
-  padding: .25rem .8rem .65rem .05rem;
+  padding: .15rem .48rem .6rem .05rem;
   scrollbar-width: thin;
-  scrollbar-color: rgb(255 244 251 / 28%) transparent;
+  scrollbar-color: rgb(255 244 236 / 28%) transparent;
 }
 
+#aura-immersive .aura-scene > .aura-lyrics .aura-lyrics-scroll { block-size: clamp(10rem, 33vh, 23rem); }
+
 #aura-immersive .aura-lyric-line {
-  margin: 0 0 .62em;
+  margin: 0 0 .72em;
   color: var(--aura-paper);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: clamp(1.3rem, 2.53vw, 2.8rem);
-  font-weight: 580;
-  line-height: 1.24;
-  letter-spacing: -.03em;
+  font-size: calc(clamp(1.2rem, 1.75vw, 1.9rem) * var(--aura-lyrics-scale));
+  font-weight: 590;
+  line-height: 1.22;
+  letter-spacing: -.038em;
 }
 
+#aura-immersive .aura-scene .aura-lyric-line { font-size: calc(clamp(1.4rem, 2.65vw, 2.85rem) * var(--aura-lyrics-scale)); }
 #aura-immersive .aura-lyric-gap { min-block-size: .4em; margin-block-end: .3em; }
-#aura-immersive [data-timed="true"] .aura-lyric-line { color: rgb(250 241 250 / 66%); }
-#aura-immersive [data-timed="true"] .aura-lyric-line[aria-current="true"] { color: var(--aura-paper); }
+#aura-immersive [data-timed="true"] .aura-lyric-line { color: rgb(255 247 239 / 69%); }
+#aura-immersive [data-timed="true"] .aura-lyric-line[aria-current="true"] { color: var(--aura-accent); }
+#aura-immersive .aura-lyric-line[aria-current="true"]:has(.aura-lyric-word) { color: var(--aura-paper); }
 #aura-immersive .aura-lyric-line[aria-current="true"] .aura-lyric-word[data-sung] { color: var(--aura-accent); }
 
 #aura-immersive .aura-settings:not([hidden]) {
@@ -363,68 +647,124 @@
   display: grid;
   align-items: safe center;
   justify-items: center;
-  z-index: 1;
+  z-index: 3;
   padding: 1rem;
   overflow: auto;
-  background: rgb(8 6 12 / 71%);
+  background: rgb(12 8 15 / 58%);
 }
 
 #aura-immersive .aura-settings-card {
-  width: min(100%, 32rem);
-  padding: clamp(1rem, 4vw, 2rem);
-  border: 1px solid var(--aura-line);
-  border-radius: 1rem;
-  background: #211b29;
-  box-shadow: 0 1.5rem 5rem rgb(4 2 9 / 62%);
+  width: min(100%, 52rem);
+  padding: clamp(1rem, 3vw, 2.2rem);
+  background:
+    linear-gradient(135deg, rgb(241 220 207 / 10%), transparent 54%),
+    rgb(27 22 31 / 96%);
 }
 
 #aura-immersive .aura-settings-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; }
-#aura-immersive .aura-settings h2 { margin: 0; font: 400 clamp(1.5rem, 4vw, 2.25rem)/1.1 Georgia, Cambria, serif; }
-#aura-immersive .aura-settings fieldset { min-width: 0; margin: 1.1rem 0 0; padding: .65rem 0 0; border: 0; border-top: 1px solid var(--aura-line); }
-#aura-immersive .aura-settings legend { padding: 0 .6rem 0 0; color: var(--aura-accent); font-size: .86rem; font-weight: 650; }
-#aura-immersive .aura-setting-options { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
-#aura-immersive .aura-settings button, #aura-immersive .aura-settings select { border-color: var(--aura-line); font-size: .88rem; }
-#aura-immersive .aura-settings select { background: #211b29; }
+#aura-immersive .aura-settings h2 { margin: 0; font: 400 clamp(1.8rem, 4vw, 2.5rem)/1.1 Georgia, Cambria, serif; letter-spacing: -.06em; }
+#aura-immersive .aura-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin-block: 1.1rem; }
+#aura-immersive .aura-settings fieldset { min-width: 0; margin: 0; padding: .65rem 0 0; border: 0; border-top: 1px solid var(--aura-line); }
+#aura-immersive .aura-settings legend { padding: 0 .55rem 0 0; color: var(--aura-accent); font-size: .86rem; font-weight: 650; }
+
+#aura-immersive :is(.aura-setting-options, .aura-settings-footer) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem;
+  font-size: .86rem;
+}
+
+#aura-immersive .aura-setting-slider { display: grid; gap: .13rem; margin: .67rem 0 .35rem; font-size: .86rem; }
+#aura-immersive .aura-setting-toggles { display: flex; flex-wrap: wrap; gap: .6rem .8rem; margin-block-start: .6rem; color: var(--aura-muted); font-size: .83rem; }
+#aura-immersive .aura-setting-toggles label { display: flex; align-items: center; gap: .45rem; }
+#aura-immersive .aura-setting-toggles input { margin: 0; accent-color: var(--aura-accent); }
+#aura-immersive .aura-settings button, #aura-immersive .aura-settings select { border-color: var(--aura-line); font-size: .85rem; }
+#aura-immersive .aura-settings select { background: #2b2531; }
+#aura-immersive .aura-settings input[type="color"] {
+  inline-size: 2.6rem;
+  block-size: 2.45rem;
+  padding: .23rem .27rem;
+  border: 1px solid var(--aura-line);
+  border-radius: .65rem;
+  background: #2b2531;
+  cursor: pointer;
+}
+#aura-immersive .aura-settings input[type="color"]:disabled { opacity: .4; cursor: default; }
+
 #aura-immersive .aura-settings input[type="number"] {
   inline-size: 6.1rem;
-  min-block-size: 2.75rem;
+  min-block-size: 2.55rem;
   padding: .4rem .65rem;
   border: 1px solid var(--aura-line);
-  border-radius: .55rem;
-  background: #211b29;
+  border-radius: .65rem;
+  background: #2b2531;
   color: inherit;
   font: inherit;
 }
-#aura-immersive .aura-settings p { margin: .65rem 0; color: var(--aura-muted); font-size: .87rem; }
+
+#aura-immersive .aura-settings p { margin: .5rem 0; color: var(--aura-muted); font-size: .83rem; }
 #aura-immersive .aura-settings p:empty { margin: 0; }
+#aura-immersive .aura-settings-footer { justify-content: space-between; padding-block-start: .75rem; border-block-start: 1px solid var(--aura-line); }
 
-@media (max-width: 49rem) {
-  #aura-immersive .aura-stage { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; padding-block: 1.5rem; }
-  #aura-immersive .aura-record { width: min(62vw, 36vh, 19rem); }
-  #aura-immersive .aura-track { width: min(100%, 34rem); margin-inline: auto; text-align: center; }
-  #aura-immersive .aura-playback-state { justify-content: center; margin-bottom: .55rem; }
-  #aura-immersive .aura-timeline, #aura-immersive .aura-player-error { text-align: start; }
-  #aura-immersive .aura-volume { width: min(26vw, 8rem); }
-  #aura-immersive .aura-background::after { background: linear-gradient(180deg, rgb(12 9 17 / 28%), rgb(12 9 17 / 83%) 60%, #100e17); }
-  #aura-immersive[data-lyrics] .aura-stage {
+@media (max-width: 70rem) {
+  #aura-immersive .aura-hero { grid-template-columns: minmax(0, 1fr); gap: 1.45rem; padding-block: 1.8rem; }
+  #aura-immersive .aura-turntable { width: min(calc(66% * var(--aura-disc-scale)), calc(14.5rem * var(--aura-disc-scale)), calc(33vh * var(--aura-disc-scale))); }
+  #aura-immersive .aura-track { text-align: center; }
+  #aura-immersive .aura-title { font-size: clamp(2.15rem, 5vw, 4rem); line-height: 1.02; }
+  #aura-immersive .aura-playback-state { margin-bottom: .65rem; }
+  #aura-immersive .aura-artist { margin-top: .55rem; }
+}
+
+@media (max-width: 50rem) {
+  #aura-immersive .aura-shell { padding-inline: clamp(.6rem, 3vw, 1.5rem); }
+  #aura-immersive .aura-header { min-block-size: 0; padding: 2.55rem 0 .55rem; }
+  #aura-immersive:is([data-side-lyrics], [data-no-side]) .aura-stage, #aura-immersive .aura-stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "record" "track" "lyrics";
-    gap: 1.15rem;
+    gap: .7rem;
+    margin-block: .8rem 1rem;
+    perspective: none;
   }
-  #aura-immersive[data-lyrics] .aura-record { width: min(38vw, 24vh, 9rem); }
-  #aura-immersive .aura-lyrics { min-block-size: 0; padding: .85rem 0 0; border-inline-start: 0; border-block-start: 1px solid var(--aura-line); }
-  #aura-immersive .aura-lyrics-scroll { block-size: clamp(12rem, 39vh, 25rem); }
+  #aura-immersive .aura-wing { transform: none; min-block-size: 0; padding: .75rem; }
+  #aura-immersive .aura-wing-left { gap: .4rem; }
+  #aura-immersive .aura-search { margin: 0; }
+  #aura-immersive .aura-nav { display: flex; flex-wrap: wrap; gap: .2rem; }
+  #aura-immersive .aura-nav button { min-block-size: 2.25rem; padding: .4rem .5rem; font-size: .81rem; }
+  #aura-immersive .aura-clock { display: flex; align-items: baseline; gap: .58rem; padding: .36rem .3rem .12rem; }
+  #aura-immersive .aura-clock time { font-size: 1.15rem; }
+  #aura-immersive .aura-clock span { font-size: .73rem; }
+  #aura-immersive .aura-hero { min-block-size: 0; padding-block: 1.55rem 1.25rem; }
+  #aura-immersive .aura-turntable { width: min(calc(57vw * var(--aura-disc-scale)), calc(16rem * var(--aura-disc-scale)), calc(32vh * var(--aura-disc-scale))); }
+  #aura-immersive .aura-queue-tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #aura-immersive .aura-queue-tracks li:first-child { grid-column: 1 / -1; }
+  #aura-immersive .aura-lyric-line { font-size: calc(clamp(1.2rem, 4.8vw, 1.7rem) * var(--aura-lyrics-scale)); }
+  #aura-immersive .aura-lyrics-scroll { block-size: clamp(12rem, 39vh, 24rem); }
 }
 
-@media (max-width: 31rem) {
-  #aura-immersive .aura-header { justify-content: center; gap: .25rem; }
-  #aura-immersive .aura-nav { justify-content: center; gap: .125rem; }
-  #aura-immersive .aura-nav button { padding-inline: .35rem; }
-  #aura-immersive .aura-exit kbd { display: none; }
-  #aura-immersive .aura-transport { justify-content: center; }
+@media (max-width: 39rem) {
+  #aura-immersive .aura-dock {
+    grid-template-columns: minmax(0, 1fr) 7rem;
+    grid-template-areas: "track volume" "actions actions" "timeline timeline";
+    gap: .1rem .35rem;
+    padding-block: .5rem .28rem;
+  }
+  #aura-immersive .aura-dock-labels > :first-child { font-size: .8rem; }
+  #aura-immersive .aura-actions { gap: .6rem; }
+  #aura-immersive .aura-settings-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+@media (max-width: 23rem) {
+  #aura-immersive .aura-header-actions button { padding-inline: .55rem; }
+  #aura-immersive .aura-exit kbd { display: none; }
+  #aura-immersive .aura-nav button { gap: .35rem; font-size: .77rem; }
+  #aura-immersive .aura-queue-tracks { grid-template-columns: minmax(0, 1fr); }
+}
+
+#aura-immersive[data-reduced] .aura-disc, #aura-immersive[data-reduced][data-playing] .aura-turntable::before { animation: none; }
+#aura-immersive[data-reduced] :is(.aura-turntable, .aura-chrome) { transform: none; transition: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  #aura-immersive .aura-disc { animation: none; }
-  #aura-immersive .aura-chrome { transition: none; }
+  #aura-immersive .aura-disc,
+  #aura-immersive[data-playing]:not([data-no-effects]) .aura-turntable::before { animation: none; }
+  #aura-immersive :is(.aura-turntable, .aura-chrome) { transform: none; transition: none; }
 }
