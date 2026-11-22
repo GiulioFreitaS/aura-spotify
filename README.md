@@ -1,5 +1,7 @@
 # AURA
 
+**Português** · [English](README.en.md)
+
 **Tema e extensão para o Spotify desktop no Windows.** AURA coloca a biblioteca, a navegação e a reprodução em painéis flutuantes. O modo imersivo leva a capa para um vinil que gira junto com a música.
 
 [Demonstração](#demonstração) · [Instalação](#instalação) · [Como usar](#como-usar) · [Desenvolvimento](#desenvolvimento)
