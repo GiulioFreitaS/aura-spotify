@@ -18,6 +18,8 @@ HOST = "127.0.0.1"
 ORIGIN = "https://xpui.app.spotify.com"
 LEASE_SECONDS = 2.8
 MAX_BODY_BYTES = 12_288
+MAX_POLYGONS = 15
+MAX_POINTS = 44
 LAYOUT = "/layout/v1"
 APPDATA = Path(os.environ["APPDATA"])
 MODULE = APPDATA / "spicetify/Extensions/node_modules/aura-native"
@@ -60,10 +62,10 @@ def read_polygons(data):
     polygons = data["polygons"]
     if polygons is None:
         return None
-    if not isinstance(polygons, list) or not 3 <= len(polygons) <= 13:
+    if not isinstance(polygons, list) or not 3 <= len(polygons) <= MAX_POLYGONS:
         raise ValueError("Quantidade de regiões inválida.")
     for polygon in polygons:
-        if not isinstance(polygon, list) or not 3 <= len(polygon) <= 24:
+        if not isinstance(polygon, list) or not 3 <= len(polygon) <= MAX_POINTS:
             raise ValueError("Formato da região inválido.")
         if not all(isinstance(point, list) and len(point) == 2 and
                    all(type(axis) is int and 0 <= axis <= 10_000 for axis in point)
@@ -82,6 +84,7 @@ class Windows:
         signatures = (
             (self.user.EnumWindows, wt.BOOL, (self.enum_callback, wt.LPARAM)),
             (self.user.GetWindow, wt.HWND, (wt.HWND, wt.UINT)),
+            (self.user.GetForegroundWindow, wt.HWND, ()),
             (self.user.IsWindowVisible, wt.BOOL, (wt.HWND,)),
             (self.user.IsIconic, wt.BOOL, (wt.HWND,)),
             (self.user.GetWindowThreadProcessId, wt.DWORD, (wt.HWND, ct.POINTER(wt.DWORD))),
@@ -178,6 +181,7 @@ class Region:
         self.original_backdrop = None
         self.last = None
         self.expires = 0.0
+        self.foreground = False
 
     def restore(self):
         if not self.window:
@@ -197,13 +201,34 @@ class Region:
             self.windows.gdi.DeleteObject(self.original)
         self.window = self.original = self.original_backdrop = self.last = None
         self.expires = 0.0
+        self.foreground = False
         return True
+
+    def sweep(self, now):
+        if not self.window:
+            return
+        hwnd, pid = self.window
+        user = self.windows.user
+        if self.windows.process_id(hwnd) != pid or self.last is None:
+            self.restore()
+            return
+
+        # Chromium may suspend its renderer while the window is behind another app.
+        # Keep the OS region in place and start a fresh health check on return.
+        focused = user.GetForegroundWindow() == hwnd and not user.IsIconic(hwnd)
+        if focused and not self.foreground:
+            self.expires = max(self.expires, now + LEASE_SECONDS)
+        self.foreground = focused
+        if focused and now >= self.expires:
+            self.restore()
 
     def apply(self, polygons):
         if polygons is None:
             return self.restore()
-        if self.window and self.windows.process_id(self.window[0]) == self.window[1] and not self.windows.user.IsIconic(self.window[0]):
+        if self.window and self.windows.process_id(self.window[0]) == self.window[1]:
             window = self.window
+            if self.windows.user.IsIconic(window[0]):
+                return self.last is not None
         else:
             window = self.windows.window()
         if not window:
@@ -265,8 +290,7 @@ class LocalBridge(HTTPServer):
         try:
             while not self.finished:
                 self.handle_request()
-                if self.region.window and time.monotonic() >= self.region.expires:
-                    self.region.restore()
+                self.region.sweep(time.monotonic())
         finally:
             self.region.restore()
 

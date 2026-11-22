@@ -10,14 +10,15 @@ const PANELS = {
   right: ".Root__right-sidebar",
   dock: ".Root__now-playing-bar",
 };
-const ITEMS = ".main-yourLibraryX-listItem";
-const LIBRARY = ".main-yourLibraryX-libraryRootlist";
+const LIBRARY = ".main-yourLibraryX-library";
+const LIBRARY_LIST = ".main-yourLibraryX-libraryRootlist";
 const OVERLAYS = [
   "#aura-immersive[open]", "dialog[open]", "[role='dialog'][aria-modal='true']",
   ".Root__cinema-view", "[data-cinema-npv-postEnter]",
 ].join(",");
 const POPOVERS = "[role='menu'],[role='listbox'],[role='tooltip'],[data-tippy-root]";
 const PRIMARY_FILTER = /^(playlists|álbuns|albums)$/i;
+const LAYOUT_NODES = [...Object.values(PANELS), LIBRARY, OVERLAYS, POPOVERS].join(",");
 
 function visible(element) {
   if (!element?.isConnected || !element.getClientRects().length) return false;
@@ -33,8 +34,15 @@ function findPanels() {
 
 function shape(element) {
   const rect = element.getBoundingClientRect();
-  const width = element.offsetWidth, height = element.offsetHeight;
   const style = getComputedStyle(element);
+  const px = (key) => Number.parseFloat(style[key]) || 0;
+  const boxSize = (key, fallback, extras) => {
+    const size = px(key);
+    if (!size) return fallback;
+    return style.boxSizing === "border-box" ? size : size + extras.reduce((total, side) => total + px(side), 0);
+  };
+  const width = boxSize("width", element.offsetWidth, ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"]);
+  const height = boxSize("height", element.offsetHeight, ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"]);
   const matrix = style.transform === "none" ? new DOMMatrixReadOnly() : new DOMMatrixReadOnly(style.transform);
   const [originX, originY] = style.transformOrigin.split(" ").map(Number.parseFloat);
   const radius = Math.min(width / 2, height / 2, Number.parseFloat(style.borderTopLeftRadius) || 0);
@@ -46,11 +54,12 @@ function shape(element) {
   const outer = corners.map(([x, y]) => project(x, y));
   const left = rect.left - Math.min(...outer.map(([x]) => x));
   const top = rect.top - Math.min(...outer.map(([, y]) => y));
+  const segments = Math.min(10, Math.max(5, Math.ceil(radius / 4)));
   const points = !radius ? outer : corners.flatMap(([x, y], i) => {
     const cx = x ? x - radius : radius;
     const cy = y ? y - radius : radius;
-    return Array.from({ length: 5 }, (_, step) => {
-      const angle = ((i + 2) + step / 4) * Math.PI / 2;
+    return Array.from({ length: segments + 1 }, (_, step) => {
+      const angle = ((i + 2) + step / segments) * Math.PI / 2;
       return project(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
     });
   });
@@ -65,9 +74,12 @@ function rectangle(rect) {
 function region(panels, active) {
   if (!active || [panels.root, panels.top, panels.left, panels.main].some((panel) => !visible(panel)) ||
       !visible(panels.dock) || [...document.querySelectorAll(OVERLAYS)].some(visible)) return null;
-  // A primeira faixa contém as bordas nativas de arraste e os botões de janela do Windows.
-  const top = Math.max(58, Math.ceil(panels.top.getBoundingClientRect().bottom));
-  const regions = [rectangle({ left: 0, top: 0, right: innerWidth, bottom: top })];
+  // O menu nativo e os botões do Windows ficam nos cantos, fora da ilha.
+  const regions = [
+    shape(panels.top),
+    rectangle({ left: 0, top: 0, right: 58, bottom: 54 }),
+    rectangle({ left: innerWidth - 142, top: 0, right: innerWidth, bottom: 54 }),
+  ];
   for (const pane of [panels.left, panels.main, panels.right, panels.dock].filter(visible)) {
     regions.push(shape(pane));
   }
@@ -80,101 +92,14 @@ function region(panels, active) {
   ]));
 }
 
-function observeLibrary(left, signal) {
-  const list = left.querySelector(LIBRARY);
-  const grid = list?.querySelector("[role='grid']");
-  if (!grid) return;
-  let scroll = grid.parentElement;
-  while (scroll !== left && !/auto|scroll/.test(getComputedStyle(scroll).overflowY)) {
-    scroll = scroll.parentElement;
-  }
-  if (scroll === left) return;
-  const options = { signal };
-  let paintTimer;
-  let drag;
-  let suppressClick = false;
-  grid.classList.add("aura-arc-list");
-  scroll.classList.add("aura-arc-scroll");
-
-  function paint() {
-    paintTimer = undefined;
-    if (document.hidden) return;
-    const viewport = scroll.getBoundingClientRect();
-    if (!viewport.height) return;
-    const middle = viewport.top + viewport.height / 2;
-    const rows = [...grid.querySelectorAll(ITEMS)].map((row) => {
-      const oldBox = row.getBoundingClientRect();
-      const relative = (oldBox.top + oldBox.height / 2 - middle) / (viewport.height / 2);
-      return [row, relative];
-    });
-    const nearest = rows.reduce((closest, item) =>
-      !closest || Math.abs(item[1]) < Math.abs(closest[1]) ? item : closest, null)?.[0];
-    for (const [row, relative] of rows) {
-      const edge = Math.min(Math.abs(relative), 1);
-      row.style.setProperty("--aura-arc-x", Math.round((1 - edge ** 2) * 41) + "px");
-      row.style.setProperty("--aura-arc-scale", (1 - edge * .18).toFixed(2));
-      row.style.setProperty("--aura-arc-tilt", Math.round(Math.min(1, Math.max(-1, relative)) * 10) + "deg");
-      row.toggleAttribute("data-aura-arc-current", row === nearest);
-    }
-  }
-
-  function queuePaint() {
-    if (paintTimer === undefined) paintTimer = setTimeout(paint, 32);
-  }
-
-  scroll.addEventListener("scroll", queuePaint, { ...options, passive: true });
-  const resized = new ResizeObserver(queuePaint);
-  resized.observe(scroll);
-  const rowsChanged = new MutationObserver(queuePaint);
-  rowsChanged.observe(grid, { childList: true, subtree: true });
-  scroll.addEventListener("pointerdown", (event) => {
-    if (!event.isPrimary || event.button !== 0 || event.pointerType !== "mouse" || event.altKey ||
-        event.target.closest("input, button, [role='button']:not([class*='legacy-list-row'])") ||
-        event.clientX >= scroll.getBoundingClientRect().right - 10) return;
-    suppressClick = false;
-    drag = { id: event.pointerId, y: event.clientY, top: scroll.scrollTop, active: false };
-  }, options);
-  scroll.addEventListener("pointermove", (event) => {
-    if (event.pointerId !== drag?.id) return;
-    if (!event.buttons) { drag = undefined; return; }
-    const offset = event.clientY - drag.y;
-    if (!drag.active && Math.abs(offset) < 6) return;
-    if (!drag.active) scroll.setPointerCapture(event.pointerId);
-    drag.active = true;
-    suppressClick = true;
-    scroll.scrollTop = drag.top - offset;
-    event.preventDefault();
-  }, options);
-  scroll.addEventListener("dragstart", (event) => {
-    if (drag && !event.altKey) event.preventDefault();
-  }, options);
-  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
-    window.addEventListener(type, (event) => {
-      if (event.pointerId === drag?.id) drag = undefined;
-    }, { ...options, capture: true });
-  }
-  scroll.addEventListener("click", (event) => {
-    if (!suppressClick || !event.detail) return;
-    suppressClick = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }, { ...options, capture: true });
-
-  paint();
-  signal.addEventListener("abort", () => {
-    clearTimeout(paintTimer);
-    resized.disconnect();
-    rowsChanged.disconnect();
-    scroll.classList.remove("aura-arc-scroll");
-    grid.classList.remove("aura-arc-list");
-    for (const row of grid.querySelectorAll(ITEMS)) {
-      row.style.removeProperty("--aura-arc-x");
-      row.style.removeProperty("--aura-arc-scale");
-      row.style.removeProperty("--aura-arc-tilt");
-      row.removeAttribute("data-aura-arc-current");
-    }
-  }, { once: true });
-  return grid;
+function changesLayout(records) {
+  return records.some((record) => {
+    if (record.type === "attributes") return true;
+    if (record.target instanceof Element && record.target.closest(LIBRARY_LIST)) return false;
+    return [...record.addedNodes, ...record.removedNodes].some((node) =>
+      node instanceof Element && (node.matches(LAYOUT_NODES) || node.querySelector(LAYOUT_NODES)),
+    );
+  });
 }
 
 export function createNativeLayout({ spicetify, signal, preferences, setLayout, getBackdrop }) {
@@ -188,8 +113,6 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
   document.body.prepend(veil);
 
   let panels = {};
-  let lastGrid;
-  let library;
   let layoutTimer;
   let bridgeTimer;
   let retryAfter = 0;
@@ -204,6 +127,7 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
   const options = { signal };
   const player = spicetify.Player;
   const onPlayer = () => {
+    if (document.hidden || !ROOT.hasAttribute("data-aura-native")) return;
     const source = getBackdrop();
     if (image.getAttribute("src") === (source || null)) return;
     image.hidden = true;
@@ -225,9 +149,9 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
   }
 
   async function reportRegion() {
-    if (!bridge || signal.aborted || requestBusy || performance.now() < retryAfter) return;
+    if (!bridge || signal.aborted || document.hidden || requestBusy || performance.now() < retryAfter) return;
     const config = preferences();
-    const active = config.nativeCutouts && ROOT.hasAttribute("data-aura-native") && !document.hidden;
+    const active = config.nativeCutouts && ROOT.hasAttribute("data-aura-native");
     const polygons = region(panels, active);
     if (!polygons && !sentActive) return;
     requestBusy = true;
@@ -240,12 +164,15 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
         body: JSON.stringify({ polygons }),
         signal: AbortSignal.any([signal, AbortSignal.timeout(650)]),
       });
-      sentActive = Boolean(polygons && response.ok);
+      if (!response.ok) throw new Error("Recorte temporariamente indisponível.");
+      sentActive = Boolean(polygons);
       ROOT.toggleAttribute("data-aura-cutouts", sentActive);
     } catch {
-      sentActive = false;
-      retryAfter = performance.now() + 1700;
-      ROOT.removeAttribute("data-aura-cutouts");
+      if (!document.hidden) {
+        sentActive = false;
+        retryAfter = performance.now() + 1700;
+        ROOT.removeAttribute("data-aura-cutouts");
+      }
     } finally {
       requestBusy = false;
     }
@@ -253,12 +180,19 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
 
   function update() {
     layoutTimer = undefined;
-    panels = findPanels();
+    if (document.hidden) return;
+    const next = findPanels();
+    if (Object.keys(PANELS).some((key) => next[key] !== panels[key])) {
+      sizes.disconnect();
+      for (const panel of Object.values(next).filter(Boolean)) sizes.observe(panel);
+      panels = next;
+    }
     const config = preferences();
     const supported = panels.root && panels.left && panels.main && panels.dock;
     const active = Boolean(config.nativeLayout && supported && innerWidth >= MIN_WIDTH && innerHeight >= MIN_HEIGHT);
     ROOT.toggleAttribute("data-aura-native", active);
     ROOT.toggleAttribute("data-aura-native-local", active && Boolean(config.background));
+    ROOT.toggleAttribute("data-aura-native-motion", active && !config.reduceMotion);
     if (buttonState !== config.nativeLayout) {
       buttonState = config.nativeLayout;
       menu?.setState?.(buttonState);
@@ -270,7 +204,7 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
       image.removeAttribute("src");
     }
 
-    if (active && !attemptedExpansion && !expansionTimer && panels.left.querySelector(".main-yourLibraryX-library")) {
+    if (active && !attemptedExpansion && !expansionTimer && panels.left.querySelector(LIBRARY)) {
       expansionTimer = setTimeout(() => {
         expansionTimer = undefined;
         if (!ROOT.hasAttribute("data-aura-native")) return;
@@ -287,27 +221,27 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
       }
     }
     if (!config.nativeLayout) attemptedExpansion = false;
-    const grid = active ? panels.left.querySelector(LIBRARY + " [role='grid']") : null;
-    if (grid !== lastGrid) {
-      library?.abort();
-      lastGrid = grid;
-      if (grid) {
-        library = new AbortController();
-        observeLibrary(panels.left, library.signal);
-      }
-    }
     void reportRegion();
   }
 
   function schedule() {
-    if (layoutTimer === undefined) layoutTimer = setTimeout(update, 70);
+    if (!document.hidden && layoutTimer === undefined) layoutTimer = setTimeout(update, 34);
   }
-  const layoutChanges = new MutationObserver(schedule);
-  // Mudanças de rota, portais, menus e painéis podem ocorrer depois da primeira renderização.
+  const sizes = new ResizeObserver(schedule);
+  const layoutChanges = new MutationObserver((records) => {
+    if (changesLayout(records)) schedule();
+  });
   layoutChanges.observe(document.body, { childList: true, subtree: true, attributes: true,
     attributeFilter: ["open", "aria-modal", "data-right-sidebar-hidden", "data-cinema-npv-postEnter"] });
   window.addEventListener("resize", schedule, options);
-  document.addEventListener("visibilitychange", schedule, options);
+  document.addEventListener("visibilitychange", () => {
+    clearTimeout(layoutTimer);
+    layoutTimer = undefined;
+    if (!document.hidden) {
+      retryAfter = 0;
+      update();
+    }
+  }, options);
   import("./bridge-config.mjs").then(({ default: config }) => {
     if (signal.aborted || !Number.isInteger(config?.port) || config.port < 1024 || config.port > 65535 ||
         typeof config?.token !== "string" || !/^[a-f0-9]{64}$/i.test(config.token)) return;
@@ -320,13 +254,15 @@ export function createNativeLayout({ spicetify, signal, preferences, setLayout, 
     clearTimeout(layoutTimer);
     clearTimeout(expansionTimer);
     clearInterval(bridgeTimer);
-    library?.abort();
+    sizes.disconnect();
     layoutChanges.disconnect();
     player.removeEventListener("songchange", onPlayer);
     button?.deregister?.();
     menu?.deregister?.();
     veil.remove();
-    for (const key of ["data-aura-native", "data-aura-native-local", "data-aura-cutouts"]) ROOT.removeAttribute(key);
+    for (const key of ["data-aura-native", "data-aura-native-local", "data-aura-native-motion", "data-aura-cutouts"]) {
+      ROOT.removeAttribute(key);
+    }
   }, { once: true });
 
   update();

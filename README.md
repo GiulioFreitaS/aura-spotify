@@ -1,6 +1,6 @@
 # AURA
 
-AURA é um tema e uma extensão para o Spotify desktop no Windows. A janela normal pode usar biblioteca curva, página central, painel da faixa e player flutuante. O modo imersivo tem o disco com a capa, letras e controles próprios.
+AURA é um tema e uma extensão para o Spotify desktop no Windows. A janela normal reúne a navegação em uma ilha, três painéis e um player flutuante. O modo imersivo tem o disco com a capa, letras e controles próprios.
 
 ## Compatibilidade
 
@@ -74,9 +74,9 @@ Para atualizar, guarde cópias de `aura.js`, `Themes/AURA/user.css` e dos módul
 
 ## Painéis na janela normal
 
-O ícone do AURA no cabeçalho ou **AURA · Layout em painéis** no perfil alterna o layout normal. Na biblioteca, use **Playlists** e **Álbuns** e role com a rodinha ou arraste a lista. A capa em destaque acompanha o centro do arco. Selecione um item para abrir sua página no Spotify.
+O ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no perfil alterna o layout normal. A biblioteca usa a lista do Spotify, com os filtros **Playlists** e **Álbuns**. As capas e os botões têm movimentos curtos ao receber o mouse ou o foco. **Reduzir movimento** nos ajustes do AURA também vale para a janela normal.
 
-**Desktop ao vivo** usa um recorte reversível da janela do Spotify 1.3.9.2055 do instalador desktop. O auxiliar usa Python 3 pelo iniciador `py.exe`. Ele cria os vãos que deixam aparecer o conteúdo real atrás da janela. O modo imersivo e as janelas estreitas usam a janela completa. Com o auxiliar desligado, os vãos dos painéis mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
+**Desktop ao vivo** usa um recorte reversível da janela do Spotify 1.3.9.2055 do instalador desktop. O auxiliar usa Python 3 pelo iniciador `py.exe`. Ele cria os vãos que deixam aparecer o conteúdo real atrás da janela e conserva o recorte ao alternar de aplicativo com **Alt + Tab**. O modo imersivo e as janelas estreitas usam a janela completa. Com o auxiliar desligado, os vãos mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
 
 **PowerShell · abrir o Spotify e iniciar o recorte**
 
