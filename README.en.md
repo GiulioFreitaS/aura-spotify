@@ -4,7 +4,7 @@
 
 **A Spicetify theme and extension for Spotify on Windows.** AURA gives the library, browsing view, and Now Playing panel their own floating surfaces. Immersive mode turns the album cover into a spinning record.
 
-[Demo](#demo) · [Installation](#installation) · [Using AURA](#using-aura) · [Development](#development)
+[Demo](#demo) · [Installation](#installation) · [Spotify updates](#spotify-updates) · [Using AURA](#using-aura) · [Development](#development)
 
 ## Demo
 
@@ -38,6 +38,7 @@
 | --- | --- |
 | Spotify for Windows | **1.3.9.2055**, from the desktop installer |
 | Spicetify | **2.46.7** |
+| PowerShell | PowerShell 7 recommended for AURA's Windows scripts. |
 | Python 3 | Optional for Live desktop. The helper uses the `py.exe` launcher. |
 | Node.js | Optional for running project checks. |
 
@@ -54,6 +55,8 @@ git clone https://github.com/GiulioFreitaS/aura-spotify.git
 Set-Location .\aura-spotify
 ```
 
+To keep the compatible version, [block automatic updates](#spotify-updates) before quitting Spotify. Apply the protection as soon as the tested build is installed.
+
 Open PowerShell in the folder containing `README.md`, `Themes`, and `Extensions`. Run `spicetify` to generate the configuration. On a fresh install, back up the original Spotify client. If you already use Spicetify, use your existing backup. [Spicetify CLI commands](https://spicetify.app/docs/cli/commands)
 
 ```powershell
@@ -65,6 +68,9 @@ spicetify backup
 ### 2. Apply AURA
 
 Run this block from the project folder. It saves your previous configuration to a dated file. Keep the path it prints so you can restore that configuration later.
+
+<details>
+<summary>Show the installation commands</summary>
 
 ```powershell
 $auraData = (spicetify path userdata).Trim()
@@ -110,6 +116,8 @@ spicetify apply
 if ($LASTEXITCODE -ne 0) { throw 'Could not apply AURA to Spotify.' }
 ```
 
+</details>
+
 ### 3. Enable Live desktop (optional)
 
 Install Python 3 with the `py.exe` launcher. Close Spotify, then run the launcher from the AURA folder to start Spotify and the local helper.
@@ -119,6 +127,32 @@ Install Python 3 with the `py.exe` launcher. Close Spotify, then run the launche
 ```
 
 In immersive mode, choose **Ajustes → Janela normal do Spotify → Fundo da janela → Desktop ao vivo**. When the helper is off, AURA's background fills the gaps between panels. [Windows window regions](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
+
+## Spotify updates
+
+The desktop client can update itself on the next launch and replace the files that load Spicetify. To keep Spotify at **1.3.9.2055**, run this command in PowerShell from the AURA folder.
+
+```powershell
+.\Windows\Atualizacoes-AURA.ps1 block
+```
+
+The block uses local permissions on `%LOCALAPPDATA%\Spotify\Update`. It applies when launching from the regular Spotify shortcut and after a Windows restart. If an update is already staged, the script saves its files in an adjacent `Update-AURA-*` folder. [Spicetify update folder protection](https://github.com/spicetify/cli/releases/tag/v3.0.0-beta.14)
+
+| Action | Command |
+| --- | --- |
+| Check whether updates are blocked | `.\Windows\Atualizacoes-AURA.ps1 status` |
+| Allow automatic updates again | `.\Windows\Atualizacoes-AURA.ps1 unblock` |
+| Block updates and start AURA with its helper | `.\Windows\Iniciar-AURA.ps1 -BloquearAtualizacoes` |
+
+### If Spotify returns to its default layout
+
+If Spotify already updated, restore desktop version **1.3.9.2055** and block updates before restarting it. If you have already set up AURA, the launcher can reapply the customization and open Spotify.
+
+```powershell
+.\Windows\Iniciar-AURA.ps1 -BloquearAtualizacoes -Reaplicar
+```
+
+To use the theme and immersive mode on their own, run `spicetify apply` after blocking updates and closing Spotify.
 
 ## Using AURA
 
@@ -150,13 +184,15 @@ Copy-Item -LiteralPath $auraBackup -Destination (spicetify -c).Trim() -Force -Er
 
 Run `spicetify apply` to reload your previous customizations. If you were using the original Spotify client before installing AURA, run `spicetify restore`. [Spicetify restore command](https://spicetify.app/docs/cli/commands#restore)
 
+To allow future Spotify updates, run `.\Windows\Atualizacoes-AURA.ps1 unblock`.
+
 ## Development
 
 | Folder | Contents |
 | --- | --- |
 | [Themes/AURA](Themes/AURA) | Theme styles and colors |
 | [Extensions](Extensions) | Player integration, animations, and lyrics |
-| [Windows](Windows) | Launcher and live desktop helper |
+| [Windows](Windows) | Launcher, live desktop helper, and update protection |
 | [tests](tests) | Lyrics parsing, timing, and lookup tests |
 
 Run the checks from the project root.

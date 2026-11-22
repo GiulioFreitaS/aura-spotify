@@ -4,7 +4,7 @@
 
 **Tema e extensão para o Spotify desktop no Windows.** AURA coloca a biblioteca, a navegação e a reprodução em painéis flutuantes. O modo imersivo leva a capa para um vinil que gira junto com a música.
 
-[Demonstração](#demonstração) · [Instalação](#instalação) · [Como usar](#como-usar) · [Desenvolvimento](#desenvolvimento)
+[Demonstração](#demonstração) · [Instalação](#instalação) · [Atualizações do Spotify](#atualizações-do-spotify) · [Como usar](#como-usar) · [Desenvolvimento](#desenvolvimento)
 
 ## Demonstração
 
@@ -38,6 +38,7 @@
 | --- | --- |
 | Spotify para Windows | **1.3.9.2055**, do instalador desktop |
 | Spicetify | **2.46.7** |
+| PowerShell | PowerShell 7 recomendado para executar os scripts do AURA. |
 | Python 3 | Opcional, para **Desktop ao vivo**. O auxiliar usa o iniciador `py.exe`. |
 | Node.js | Opcional, para rodar as verificações do código. |
 
@@ -54,6 +55,8 @@ git clone https://github.com/GiulioFreitaS/aura-spotify.git
 Set-Location .\aura-spotify
 ```
 
+Se quiser manter a versão compatível, [bloqueie as atualizações automáticas](#atualizações-do-spotify) antes de sair do Spotify. Aplique a proteção assim que a versão testada estiver instalada.
+
 Abra o PowerShell na pasta que contém `README.md`, `Themes` e `Extensions`. Gere a configuração com `spicetify`. Em uma instalação nova, faça o backup inicial do Spotify original. Se já usa Spicetify, use o backup existente. [Comandos do Spicetify](https://spicetify.app/docs/cli/commands)
 
 ```powershell
@@ -65,6 +68,9 @@ spicetify backup
 ### 2. Ativar o AURA
 
 Execute o bloco na pasta do projeto. Ele guarda a configuração anterior em um arquivo datado. Anote o caminho exibido para poder restaurá-la.
+
+<details>
+<summary>Mostrar os comandos de instalação</summary>
 
 ```powershell
 $auraData = (spicetify path userdata).Trim()
@@ -110,6 +116,8 @@ spicetify apply
 if ($LASTEXITCODE -ne 0) { throw 'Falha ao aplicar o AURA ao Spotify.' }
 ```
 
+</details>
+
 ### 3. Ativar o recorte da janela (opcional)
 
 Instale Python 3 com o iniciador `py.exe` se quiser ver o desktop nos vãos. Feche o Spotify e execute o iniciador na pasta do AURA para abrir o cliente e o auxiliar local.
@@ -119,6 +127,32 @@ Instale Python 3 com o iniciador `py.exe` se quiser ver o desktop nos vãos. Fec
 ```
 
 Escolha **Ajustes → Janela normal do Spotify → Fundo da janela → Desktop ao vivo** no modo imersivo. Com o auxiliar desligado, os espaços entre os painéis mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
+
+## Atualizações do Spotify
+
+O cliente desktop pode atualizar na próxima abertura e substituir os arquivos que carregam o Spicetify. Para manter o Spotify na **1.3.9.2055**, use o comando abaixo no PowerShell, na pasta do AURA.
+
+```powershell
+.\Windows\Atualizacoes-AURA.ps1 block
+```
+
+O bloqueio usa permissões locais na pasta `%LOCALAPPDATA%\Spotify\Update`. Ele vale ao abrir pelo atalho normal e após reiniciar o Windows. Se já existir uma atualização pendente, o script guarda os arquivos em uma pasta `Update-AURA-*` ao lado. [Proteção do atualizador no Spicetify](https://github.com/spicetify/cli/releases/tag/v3.0.0-beta.14)
+
+| Quando usar | Comando |
+| --- | --- |
+| Conferir o bloqueio | `.\Windows\Atualizacoes-AURA.ps1 status` |
+| Liberar as atualizações | `.\Windows\Atualizacoes-AURA.ps1 unblock` |
+| Bloquear e abrir com o auxiliar do AURA | `.\Windows\Iniciar-AURA.ps1 -BloquearAtualizacoes` |
+
+### Quando o layout volta ao padrão
+
+Se o Spotify já atualizou, volte à **1.3.9.2055** do instalador desktop e aplique o bloqueio antes de reiniciar o cliente. Se já tiver ativado o AURA, o iniciador pode reaplicar a personalização e abrir o Spotify em seguida.
+
+```powershell
+.\Windows\Iniciar-AURA.ps1 -BloquearAtualizacoes -Reaplicar
+```
+
+Para usar só o tema e o modo imersivo, execute `spicetify apply` depois de bloquear as atualizações e fechar o Spotify.
 
 ## Como usar
 
@@ -148,13 +182,15 @@ Copy-Item -LiteralPath $auraBackup -Destination (spicetify -c).Trim() -Force -Er
 
 Use `spicetify apply` para reaplicar seus ajustes anteriores. Se o Spotify estava original antes da instalação, use `spicetify restore`. [Restauração do Spicetify](https://spicetify.app/docs/cli/commands#restore)
 
+Para liberar futuras atualizações do Spotify, execute `.\Windows\Atualizacoes-AURA.ps1 unblock`.
+
 ## Desenvolvimento
 
 | Pasta | Conteúdo |
 | --- | --- |
 | [Themes/AURA](Themes/AURA) | Estilos e paleta do tema |
 | [Extensions](Extensions) | Extensão, integração com o player, animações e letras |
-| [Windows](Windows) | Iniciador e auxiliar de transparência |
+| [Windows](Windows) | Iniciador, auxiliar de transparência e proteção da versão instalada |
 | [tests](tests) | Verificações de parsing, sincronização e consulta de letras |
 
 Rode as verificações na raiz do projeto.
