@@ -106,4 +106,4 @@ spicetify restore
 node --check .\Extensions\aura.js
 ```
 
-O Edge executou o tema e a extensão em uma página temporária com a interface do Spicetify simulada. Foram verificados controles, eventos de faixa e pausa, Esc e foco, fallback de navegação, importação de imagem, persistência após recarregar, recuperação de dados corrompidos, movimento reduzido e quatro tamanhos de janela. A instalação e a reprodução no Spotify ainda precisam da validação acima. [Decisões técnicas](docs/DECISOES.md)
+O Edge executou o tema e a extensão em uma página temporária com a interface do Spicetify simulada. Foram verificados controles, eventos de faixa e pausa, recuperação do estado da faixa sem evento, Esc e foco, navegação, importação de imagem, persistência, dados corrompidos, movimento reduzido e quatro tamanhos de janela. O AURA também foi aplicado ao Spotify 1.3.9.2055 com o Spicetify 2.46.7. O roteiro acima cobre os testes de reprodução no cliente. [Decisões técnicas](docs/DECISOES.md)

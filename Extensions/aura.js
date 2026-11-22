@@ -7,6 +7,7 @@
   const MAX_IMAGE_DATA = 1_400_000;
   const THEME_ID = "aura-immersive";
   const IDLE_DELAY = 3600;
+  const PLAYER_FALLBACK_DELAY = 500;
 
   const layout = `
     <div class="aura-background" aria-hidden="true">
@@ -194,6 +195,9 @@
 
   function mount(spicetify) {
     const player = spicetify.Player;
+    const readPlayerState = () => spicetify.Platform.PlayerAPI?.getState?.() ?? player.data;
+    const trackFromState = (state) => state?.item ?? state?.track ?? null;
+    const playbackId = (state) => state?.playbackId ?? state?.playback_id;
     const storage = spicetify.LocalStorage;
     const dialog = document.createElement("dialog");
     dialog.id = THEME_ID;
@@ -223,10 +227,12 @@
     const lifetime = new AbortController();
     const eventOptions = { signal: lifetime.signal };
     let prefs = loadPreferences(storage);
-    let current = null;
+    let current;
     let cover = "";
     let playing = false;
     let listening = false;
+    let playerTimer;
+    let lastPlayerEvent = 0;
     let idleTimer;
     let releaseTimer;
     let drag;
@@ -274,14 +280,18 @@
 
     function syncProgress() {
       if (!dialog.open || document.hidden) return;
-      syncPlayback();
+      const state = readPlayerState();
+      const track = trackFromState(state);
+      if (track !== current) syncTrack(track);
+      syncPlayback(state);
       if (drag?.slider !== ui.seek) paintProgress();
       if (drag?.slider !== ui.volume) paintVolume(player.getVolume());
     }
 
-    function syncPlayback() {
-      const isPlaying = Boolean(current && player.isPlaying());
-      const buffering = player.data?.isBuffering;
+    function syncPlayback(state) {
+      const paused = state?.isPaused ?? state?.is_paused;
+      const isPlaying = Boolean(current && (typeof paused === "boolean" ? !paused : player.isPlaying()));
+      const buffering = state?.isBuffering ?? state?.is_buffering;
       const shouldSpin = isPlaying && !buffering;
       const changed = playing !== shouldSpin;
       playing = shouldSpin;
@@ -301,8 +311,9 @@
       showImage(ui.background, prefs.background || cover);
     }
 
-    function syncTrack() {
-      current = player.data?.item ?? null;
+    function syncTrack(track) {
+      const changedTrack = current?.uri !== track?.uri;
+      current = track;
       const { title, artist, album, artwork } = trackDetails(current);
       updateText(ui.title, title);
       updateText(ui.artist, artist);
@@ -315,26 +326,31 @@
       showImage(ui.cover, cover);
       syncBackground();
       paintProgress();
-      syncProgress();
-      showControls();
+      if (changedTrack) showControls();
     }
 
-    const playerEvents = [
-      ["songchange", syncTrack],
-      ["onplaypause", syncProgress],
-      ["onprogress", syncProgress],
-    ];
+    const playerEvents = ["songchange", "onplaypause", "onprogress"];
+
+    function onPlayerEvent() {
+      lastPlayerEvent = performance.now();
+      syncProgress();
+    }
 
     function observePlayer() {
       const shouldListen = dialog.open && !document.hidden;
       if (shouldListen === listening) return;
       listening = shouldListen;
-      for (const [type, listener] of playerEvents) {
-        if (listening) player.addEventListener(type, listener);
-        else player.removeEventListener(type, listener);
+      for (const type of playerEvents) {
+        if (listening) player.addEventListener(type, onPlayerEvent);
+        else player.removeEventListener(type, onPlayerEvent);
       }
-      if (listening) syncTrack();
-      else {
+      if (listening) {
+        onPlayerEvent();
+        playerTimer = setInterval(() => {
+          if (performance.now() - lastPlayerEvent >= PLAYER_FALLBACK_DELAY) syncProgress();
+        }, PLAYER_FALLBACK_DELAY);
+      } else {
+        clearInterval(playerTimer);
         playing = false;
         dialog.removeAttribute("data-playing");
         showControls();
@@ -394,6 +410,7 @@
       clearTimeout(releaseTimer);
       drag = null;
       observePlayer();
+      current = undefined;
       showImage(ui.cover, "");
       showImage(ui.background, "");
       updateText(ui.playerError, "");
@@ -448,7 +465,8 @@
       slider.addEventListener("pointerdown", (event) => {
         if (event.button !== 0 || !event.isPrimary) return;
         clearTimeout(releaseTimer);
-        drag = { slider, pointerId: event.pointerId, uri: current?.uri, playbackId: player.data?.playbackId };
+        const state = readPlayerState();
+        drag = { slider, pointerId: event.pointerId, uri: trackFromState(state)?.uri, playbackId: playbackId(state) };
         showControls();
       }, eventOptions);
     }
@@ -457,13 +475,14 @@
       paintProgress(player.getDuration() * ui.seek.valueAsNumber / 1000);
     }, eventOptions);
     ui.seek.addEventListener("change", () => {
-      const state = player.data;
-      if (drag?.slider === ui.seek && (drag.uri !== state?.item?.uri || drag.playbackId !== state?.playbackId)) {
+      const state = readPlayerState();
+      const track = trackFromState(state);
+      if (drag?.slider === ui.seek && (drag.uri !== track?.uri || drag.playbackId !== playbackId(state))) {
         paintProgress();
         return;
       }
-      const fraction = ui.seek.valueAsNumber / 1000;
-      if (current && !ui.seek.disabled) control(() => player.seek(fraction));
+      const position = Math.round(player.getDuration() * ui.seek.valueAsNumber / 1000);
+      if (track && !ui.seek.disabled) control(() => player.seek(position));
     }, eventOptions);
     ui.volume.addEventListener("input", () => paintVolume(ui.volume.valueAsNumber / 100), eventOptions);
     ui.volume.addEventListener("change", () => control(() => player.setVolume(ui.volume.valueAsNumber / 100)), eventOptions);
