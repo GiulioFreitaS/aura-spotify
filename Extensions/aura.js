@@ -2,7 +2,7 @@
   "use strict";
 
   const PREFERENCES_KEY = "aura:preferences";
-  const DEFAULTS = { version: 1, modifiers: "ctrl-alt", key: "A", background: null };
+  const DEFAULTS = { version: 2, modifiers: "ctrl-alt", key: "A", background: null, lyricsOffsetMs: 0 };
   const MAX_IMAGE_INPUT = 18 * 1024 * 1024;
   const MAX_IMAGE_DATA = 1_400_000;
   const THEME_ID = "aura-immersive";
@@ -19,6 +19,7 @@
         <nav class="aura-nav" aria-label="Navegação">
           <button type="button" data-aura="library"><span class="aura-icon" data-icon="library" aria-hidden="true"></span>Biblioteca</button>
           <button type="button" data-aura="search"><span class="aura-icon" data-icon="search" aria-hidden="true"></span>Buscar</button>
+          <button type="button" data-aura="lyricsButton" aria-controls="aura-lyrics" aria-expanded="false">Letras</button>
           <button type="button" data-aura="settingsButton" aria-controls="aura-settings" aria-expanded="false">Ajustes</button>
           <button type="button" data-aura="exit" class="aura-exit" aria-label="Sair do modo imersivo">Sair <kbd aria-hidden="true">Esc</kbd></button>
         </nav>
@@ -54,6 +55,18 @@
             <p class="aura-player-error" data-aura="playerError" role="status"></p>
           </div>
         </div>
+        <section id="aura-lyrics" class="aura-lyrics" data-aura="lyrics" aria-labelledby="aura-lyrics-title" hidden>
+          <header class="aura-lyrics-header">
+            <h2 id="aura-lyrics-title">Letra</h2>
+            <p class="aura-lyrics-meta" data-lyrics="meta" hidden>
+              <a data-lyrics="source" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer">LRCLIB</a>
+              <span data-lyrics="kind" hidden></span>
+            </p>
+          </header>
+          <p class="aura-lyrics-status" data-lyrics="status" role="status"></p>
+          <button type="button" class="aura-lyrics-retry" data-lyrics="retry" hidden>Tentar novamente</button>
+          <div class="aura-lyrics-scroll" data-lyrics="scroll" role="region" aria-label="Letra da faixa" tabindex="0" hidden></div>
+        </section>
       </div>
     </div>
     <section id="aura-settings" class="aura-settings" data-aura="settings" aria-labelledby="aura-settings-title" hidden>
@@ -82,13 +95,22 @@
             <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/bmp" data-aura="file" hidden>
           </div>
         </fieldset>
+        <fieldset>
+          <legend>Letras</legend>
+          <div class="aura-setting-options">
+            <label for="aura-lyrics-offset">Atraso (ms)</label>
+            <input id="aura-lyrics-offset" type="number" min="-5000" max="5000" step="100" data-aura="lyricsOffset" aria-describedby="aura-lyrics-offset-help">
+            <button type="button" data-aura="resetLyricsOffset">Zerar</button>
+          </div>
+          <p id="aura-lyrics-offset-help">Valores positivos fazem a letra aparecer mais tarde.</p>
+        </fieldset>
         <p data-aura="settingStatus" role="status"></p>
       </div>
     </section>`;
 
   function validatePreferences(value) {
-    if (value?.version !== DEFAULTS.version) return { ...DEFAULTS };
-    const { modifiers, key, background } = value;
+    if (value?.version !== 1 && value?.version !== DEFAULTS.version) return { ...DEFAULTS };
+    const { modifiers, key, background, lyricsOffsetMs } = value;
     return {
       version: DEFAULTS.version,
       modifiers: modifiers === "ctrl-shift" ? modifiers : DEFAULTS.modifiers,
@@ -96,6 +118,7 @@
       background: typeof background === "string" &&
         background.length <= MAX_IMAGE_DATA &&
         /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(background) ? background : null,
+      lyricsOffsetMs: Number.isSafeInteger(lyricsOffsetMs) && Math.abs(lyricsOffsetMs) <= 5000 ? lyricsOffsetMs : 0,
     };
   }
 
@@ -158,6 +181,7 @@
     return {
       title: item?.name || meta.title || (item ? "Faixa sem título" : "Nenhuma faixa selecionada"),
       artist: [...new Set(artists)].join(", ") || meta.album_artist_name || "",
+      primaryArtist: item?.artists?.[0]?.name || meta.artist_name || artists[0] || meta.album_artist_name || "",
       album: item?.album?.name || meta.album_title || "",
       artwork: artwork ?? "",
     };
@@ -229,6 +253,9 @@
     let prefs = loadPreferences(storage);
     let current;
     let cover = "";
+    let lyricsTrack = null;
+    let lyricsView;
+    let lyricsModule;
     let playing = false;
     let listening = false;
     let playerTimer;
@@ -271,6 +298,10 @@
       updateText(ui.elapsed, elapsedLabel);
       updateText(ui.duration, durationLabel);
       paintRange(ui.seek, duration ? Math.round(elapsed / duration * 1000) : 0, elapsedLabel + " de " + durationLabel);
+      if (lyricsView && !ui.lyrics.hidden && dialog.open && !document.hidden) {
+        lyricsView.setTrack(lyricsTrack, duration);
+        lyricsView.updateTime(elapsed, prefs.lyricsOffsetMs);
+      }
     }
 
     function paintVolume(level) {
@@ -314,7 +345,8 @@
     function syncTrack(track) {
       const changedTrack = current?.uri !== track?.uri;
       current = track;
-      const { title, artist, album, artwork } = trackDetails(current);
+      const { title, artist, album, artwork, primaryArtist } = trackDetails(current);
+      lyricsTrack = current ? { uri: current.uri, title: current.name || current.metadata?.title || "", artist, primaryArtist, album } : null;
       updateText(ui.title, title);
       updateText(ui.artist, artist);
       updateText(ui.album, album);
@@ -353,6 +385,7 @@
         clearInterval(playerTimer);
         playing = false;
         dialog.removeAttribute("data-playing");
+        lyricsView?.clear();
         showControls();
       }
     }
@@ -360,6 +393,8 @@
     function syncSettings() {
       ui.modifiers.value = prefs.modifiers;
       ui.key.value = prefs.key;
+      ui.lyricsOffset.value = prefs.lyricsOffsetMs;
+      ui.resetLyricsOffset.disabled = prefs.lyricsOffsetMs === 0;
       ui.backgroundChoice.textContent = prefs.background ? "Imagem local em uso" : "Capa do álbum em uso";
       ui.useCover.disabled = !prefs.background;
       if (playbarButton) {
@@ -380,6 +415,34 @@
       }
       syncSettings();
       syncBackground();
+      if (dialog.open && !ui.lyrics.hidden) paintProgress();
+    }
+
+    function toggleLyrics() {
+      const open = ui.lyrics.hidden;
+      ui.lyrics.hidden = !open;
+      ui.lyricsButton.setAttribute("aria-expanded", String(open));
+      dialog.toggleAttribute("data-lyrics", open);
+      showControls();
+      if (!open) {
+        lyricsView?.clear();
+        return;
+      }
+      if (lyricsView) {
+        paintProgress();
+        return;
+      }
+      const status = ui.lyrics.querySelector('[data-lyrics="status"]');
+      status.hidden = false;
+      status.textContent = "Carregando letras…";
+      lyricsModule ??= import("./node_modules/aura-lyrics/view.mjs").then(({ createLyricsView }) => {
+        if (lifetime.signal.aborted) return;
+        lyricsView = createLyricsView(ui.lyrics, lifetime.signal);
+        if (!ui.lyrics.hidden && dialog.open) paintProgress();
+      }).catch(() => {
+        status.textContent = "O módulo de letras não pôde ser carregado.";
+        lyricsModule = undefined;
+      });
     }
 
     function openSettings() {
@@ -406,6 +469,7 @@
 
     function closeView() {
       if (dialog.open) dialog.close();
+      if (!ui.lyrics.hidden) toggleLyrics();
       if (!ui.settings.hidden) closeSettings(false);
       clearTimeout(releaseTimer);
       drag = null;
@@ -491,6 +555,7 @@
     ui.next.addEventListener("click", () => control(() => player.next()), eventOptions);
 
     ui.settingsButton.addEventListener("click", openSettings, eventOptions);
+    ui.lyricsButton.addEventListener("click", toggleLyrics, eventOptions);
     ui.settingsBack.addEventListener("click", () => closeSettings(true), eventOptions);
     ui.exit.addEventListener("click", closeView, eventOptions);
     for (const target of ["library", "search"]) {
@@ -507,6 +572,11 @@
     for (const setting of ["modifiers", "key"]) {
       ui[setting].addEventListener("change", () => savePreferences({ [setting]: ui[setting].value }), eventOptions);
     }
+    ui.lyricsOffset.addEventListener("change", () => {
+      const offset = ui.lyricsOffset.valueAsNumber;
+      savePreferences({ lyricsOffsetMs: Number.isFinite(offset) ? Math.round(Math.max(-5000, Math.min(5000, offset))) : 0 });
+    }, eventOptions);
+    ui.resetLyricsOffset.addEventListener("click", () => savePreferences({ lyricsOffsetMs: 0 }), eventOptions);
     ui.chooseImage.addEventListener("click", () => ui.file.click(), eventOptions);
     ui.useCover.addEventListener("click", () => {
       imageRequest += 1;
