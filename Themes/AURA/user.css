@@ -436,10 +436,30 @@
 
 #aura-immersive :is(.aura-queue, .aura-lyrics) h2 .aura-icon { color: var(--aura-accent); }
 #aura-immersive .aura-queue-empty { margin: 1.1rem 0 0; color: var(--aura-muted); font-size: .86rem; }
+#aura-immersive .aura-queue-scroll {
+  max-block-size: min(46vh, 27rem);
+  margin-block-start: .8rem;
+  padding-inline-end: .25rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 238 225 / 28%) transparent;
+  scrollbar-gutter: stable;
+}
+
+#aura-immersive .aura-queue-scroll h3 {
+  margin: .25rem .3rem .45rem;
+  color: var(--aura-muted);
+  font-size: .75rem;
+  font-weight: 650;
+}
+
+#aura-immersive [data-aura="queueNextGroup"] h3 { margin-block-start: .9rem; }
+
 #aura-immersive .aura-queue-tracks {
   display: grid;
   gap: .28rem;
-  margin: .85rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -764,11 +784,59 @@
 #aura-immersive[data-reduced] .aura-disc, #aura-immersive[data-reduced][data-playing] .aura-turntable::before { animation: none; }
 #aura-immersive[data-reduced] :is(.aura-turntable, .aura-chrome) { transform: none; transition: none; }
 
+@keyframes aura-queue-arrival {
+  from { opacity: .35; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #aura-immersive:not([data-reduced]) [data-aura-queue-arrival] {
+    animation: aura-queue-arrival 280ms cubic-bezier(.22, .65, .32, 1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #aura-immersive .aura-disc,
   #aura-immersive[data-playing]:not([data-no-effects]) .aura-turntable::before { animation: none; }
   #aura-immersive :is(.aura-turntable, .aura-chrome) { transform: none; transition: none; }
 }
+
+.aura-motion-layer {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  overflow: hidden;
+  color: var(--aura-accent, var(--spice-button, #f2d6a1));
+  pointer-events: none;
+}
+
+.aura-motion-ring, .aura-motion-cover {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+  opacity: 0;
+}
+
+.aura-motion-ring {
+  width: var(--aura-wave-size);
+  aspect-ratio: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 61%, color-mix(in srgb, currentColor 20%, transparent));
+  box-shadow: 0 0 16px color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.aura-motion-cover {
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: 11px;
+  background: #292330;
+  box-shadow: 0 9px 24px rgb(10 7 14 / 60%), 0 0 16px color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.aura-motion-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 
 /* AURA na janela normal do Spotify */
@@ -779,7 +847,6 @@ html[data-aura-native] {
   --aura-normal-edge: rgb(246 225 209 / 21%);
   --aura-normal-gap: clamp(12px, 1.4vw, 27px);
   --aura-normal-side-y: clamp(10px, 2vh, 22px);
-  --aura-normal-ease: cubic-bezier(.22, .62, .36, 1);
 }
 
 html[data-aura-native] .aura-native-background {
@@ -919,24 +986,39 @@ html[data-aura-native] .Root__nav-bar .main-yourLibraryX-listItem {
 html[data-aura-native][data-aura-cutouts] .aura-native-background { display: none; }
 html[data-aura-native][data-aura-cutouts] { --aura-normal-glass: #211d28; }
 
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  html[data-aura-native-motion] .Root__globalNav :is(button, .main-globalNav-navLink),
-  html[data-aura-native-motion] .Root__now-playing-bar button,
-  html[data-aura-native-motion] .Root__nav-bar .main-yourLibraryX-listItem .x-entityImage-imageContainer {
-    transition: transform 155ms var(--aura-normal-ease);
+@media (prefers-reduced-motion: no-preference) {
+  html[data-aura-native-motion] { --aura-normal-ease: cubic-bezier(.22, .65, .32, 1); }
+
+  html[data-aura-native-motion] :is(.Root__globalNav, .Root__now-playing-bar, .Root__right-sidebar) button,
+  html[data-aura-native-motion] .main-globalNav-navLink,
+  html[data-aura-native-motion] .main-playButton-PlayButton button {
+    transition: translate 170ms var(--aura-normal-ease), scale 170ms var(--aura-normal-ease),
+      background-color 170ms ease, color 170ms ease;
   }
 
-  html[data-aura-native-motion] .Root__globalNav :is(button, .main-globalNav-navLink):is(:hover, :focus-visible),
-  html[data-aura-native-motion] .Root__now-playing-bar button:is(:hover, :focus-visible) {
-    transform: translateY(-1px);
+  html[data-aura-native-motion] :is(.Root__globalNav, .Root__now-playing-bar, .Root__right-sidebar) button:not(:disabled):is(:hover, :focus-visible),
+  html[data-aura-native-motion] .main-globalNav-navLink:is(:hover, :focus-visible),
+  html[data-aura-native-motion] .main-playButton-PlayButton button:is(:hover, :focus-visible) {
+    translate: 0 -2px;
   }
 
-  html[data-aura-native-motion] :is(.Root__globalNav, .Root__now-playing-bar) button:active {
-    transform: scale(.94);
+  html[data-aura-native-motion] :is(.Root__globalNav, .Root__now-playing-bar, .Root__right-sidebar, .main-playButton-PlayButton) button:active {
+    translate: 0;
+    scale: .94;
   }
 
-  html[data-aura-native-motion] .Root__nav-bar .main-yourLibraryX-listItem:is(:hover, :focus-within) .x-entityImage-imageContainer {
-    transform: scale(1.045);
+  html[data-aura-native-motion] :is(.main-cardImage-image, .main-trackList-rowImage, .main-yourLibraryX-listItem .x-entityImage-imageContainer) {
+    transition: scale 240ms var(--aura-normal-ease);
+  }
+
+  html[data-aura-native-motion] .main-card-cardContainer:is(:hover, :focus-within) .main-cardImage-image,
+  html[data-aura-native-motion] .main-trackList-trackListRow:is(:hover, :focus-within) .main-trackList-rowImage,
+  html[data-aura-native-motion] .main-yourLibraryX-listItem:is(:hover, :focus-within) .x-entityImage-imageContainer {
+    scale: 1.05;
+  }
+
+  html[data-aura-native-motion] :is(.main-trackList-trackListRow, .main-card-cardContainer, .main-yourLibraryX-listItem, [role="menuitem"]) {
+    transition: background-color 170ms var(--aura-normal-ease);
   }
 }
 

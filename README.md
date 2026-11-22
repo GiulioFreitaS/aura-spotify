@@ -74,7 +74,7 @@ Para atualizar, guarde cópias de `aura.js`, `Themes/AURA/user.css` e dos módul
 
 ## Painéis na janela normal
 
-O ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no perfil alterna o layout normal. A biblioteca usa a lista do Spotify, com os filtros **Playlists** e **Álbuns**. As capas e os botões têm movimentos curtos ao receber o mouse ou o foco. **Reduzir movimento** nos ajustes do AURA também vale para a janela normal.
+O ícone do AURA na ilha de navegação ou **AURA · Layout em painéis** no perfil alterna o layout normal. A biblioteca usa a lista do Spotify, com os filtros **Playlists** e **Álbuns**. Páginas e menus entram suavemente, e capas e botões reagem ao mouse e ao foco. Ao iniciar uma nova faixa a partir de um clique, a miniatura da capa percorre a tela até o painel direito ou o player, com uma onda na chegada. **Reduzir movimento** nos ajustes do AURA também vale para a janela normal.
 
 Escolha **AURA · Papel de parede** no menu do perfil para alternar o fundo da janela normal. As mesmas opções estão em **Modo imersivo → Ajustes → Janela normal do Spotify → Fundo da janela**. **Papel de parede** mostra a imagem do AURA ou a capa do álbum atrás dos painéis. **Desktop ao vivo** revela os apps e o desktop nos vãos.
 
@@ -96,7 +96,7 @@ Se o Spotify já estava aberto na primeira ativação do auxiliar, feche e abra 
 
 ## HUD e ajustes
 
-O painel da direita mostra até cinco faixas da fila. A barra flutuante controla a reprodução, a posição na faixa, o volume, o modo aleatório, a repetição e as curtidas. Os controles ficam visíveis por padrão. Ative **Recolher controles** em **Ajustes** para ocultar a barra durante a reprodução após alguns segundos sem interação.
+O painel da direita mostra as faixas adicionadas manualmente acima da sequência do álbum ou da playlist. A lista pode ser rolada e acompanha a fila do Spotify mesmo com a reprodução pausada. A barra flutuante controla a reprodução, a posição na faixa, o volume, o modo aleatório, a repetição e as curtidas. Os controles ficam visíveis por padrão. Ative **Recolher controles** em **Ajustes** para ocultar a barra durante a reprodução após alguns segundos sem interação.
 
 Em **Ajustes**, escolha o fundo, o escurecimento e a cor de destaque. A cor automática vem dos pixels da capa. A composição tem ajustes de tamanho do disco, profundidade 3D, brilho decorativo, relógio e fila. Janelas estreitas empilham os painéis. A opção **Reduzir movimento** pausa a animação do disco e do brilho e retira o movimento com o mouse. **Restaurar visual do AURA** mantém a imagem local, o atalho e o atraso das letras.
 
@@ -118,7 +118,8 @@ Em **Ajustes → Letras**, um atraso positivo faz a letra aparecer mais tarde. U
 6. Redimensione a janela e repita com a escala do Windows em 125% ou 150%. Confira se a fonte, o disco, a linha do tempo e o botão Sair continuam alcançáveis. Repita com uma faixa de nome longo e com uma faixa sem capa.
 7. Abra **Letras** em uma faixa com sincronização. Avance e volte pela linha do tempo e confira se o destaque acompanha a posição. Troque de faixa com o painel aberto e confira que a letra muda junto.
 8. Ajuste o atraso para `+1000 ms` e depois `-1000 ms`. Confira o atraso, o adiantamento e a persistência após reiniciar. Confira também uma faixa instrumental ou sem dados e a recuperação após uma falha de rede.
-9. Mude a profundidade, a cor e a posição das letras. Confira a fila, o relógio e os botões de aleatório, repetição, curtir e silenciar. Ative **Reduzir movimento** e confira o disco parado enquanto a faixa toca.
+9. Com a reprodução pausada, adicione uma faixa à fila pelo Spotify. Abra o modo imersivo e confira a faixa em **Adicionadas à fila**, acima de **Em seguida**. Confira também o relógio e os botões de aleatório, repetição, curtir e silenciar.
+10. Navegue por páginas e menus, inicie outra faixa e confira a chegada da capa ao painel direito ou ao player. Ative **Reduzir movimento** e confira o disco parado e a navegação sem as animações do AURA.
 
 ## Voltar à configuração anterior
 

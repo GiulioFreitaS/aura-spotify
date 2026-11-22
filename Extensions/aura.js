@@ -18,7 +18,6 @@
   const THEME_ID = "aura-immersive";
   const IDLE_DELAY = 3600;
   const PLAYER_FALLBACK_DELAY = 500;
-  const QUEUE_LIMIT = 5;
 
   const layout = `
     <div class="aura-background" aria-hidden="true">
@@ -70,7 +69,16 @@
           <section class="aura-queue" data-aura="queue" aria-labelledby="aura-queue-title">
             <h2 id="aura-queue-title"><span class="aura-icon" data-icon="queue" aria-hidden="true"></span>A seguir</h2>
             <p class="aura-queue-empty" data-aura="queueStatus" hidden></p>
-            <ol class="aura-queue-tracks" data-aura="queueTracks" aria-label="Próximas faixas"></ol>
+            <div class="aura-queue-scroll" data-aura="queueScroll" role="region" aria-label="Fila de reprodução" tabindex="0" hidden>
+              <div data-aura="queueManualGroup" hidden>
+                <h3>Adicionadas à fila</h3>
+                <ol class="aura-queue-tracks" data-aura="queueManual"></ol>
+              </div>
+              <div data-aura="queueNextGroup" hidden>
+                <h3 data-aura="queueNextHeading" hidden>Em seguida</h3>
+                <ol class="aura-queue-tracks" data-aura="queueTracks" aria-label="Próximas faixas"></ol>
+              </div>
+            </div>
           </section>
           <section id="aura-lyrics" class="aura-lyrics" data-aura="lyrics" aria-labelledby="aura-lyrics-title" hidden>
             <header class="aura-lyrics-header">
@@ -297,6 +305,33 @@
     else image.removeAttribute("src");
   }
 
+  function readQueue(spicetify, state) {
+    const origin = spicetify.Player.origin ?? spicetify.Platform.PlayerAPI;
+    try {
+      // No 1.3.9 a fila do player separa inserções manuais da sequência do álbum ou playlist.
+      const queue = origin?.getQueue?.();
+      if (Array.isArray(queue?.queued) && Array.isArray(queue?.nextUp)) {
+        return { manual: queue.queued, next: queue.nextUp };
+      }
+    } catch { /* O player pode ainda estar se conectando ao dispositivo. */ }
+    const tracks = Array.isArray(state?.nextItems) ? state.nextItems : spicetify.Queue?.nextTracks;
+    if (!Array.isArray(tracks)) return null;
+    return {
+      manual: tracks.filter((track) => track?.provider === "queue"),
+      next: tracks.filter((track) => track?.provider !== "queue"),
+    };
+  }
+
+  function observeQueue(spicetify, listener) {
+    const origin = spicetify.Player.origin ?? spicetify.Platform.PlayerAPI;
+    try {
+      const events = origin?.getEvents?.();
+      if (typeof events?.addListener !== "function" || typeof events?.removeListener !== "function") return;
+      const stop = events.addListener("queue_update", listener);
+      return typeof stop === "function" ? stop : () => events.removeListener("queue_update", listener);
+    } catch { /* O ciclo de atualização do player também pode ler a fila. */ }
+  }
+
   function coverAccent(image) {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 24;
@@ -398,7 +433,9 @@
     let prefs = loadPreferences(storage);
     let current;
     let cover = "";
-    let queueSignature;
+    let queueSnapshot;
+    let manualQueueKeys = new Set();
+    let stopQueue;
     let lyricsTrack = null;
     let lyricsView;
     let lyricsModule;
@@ -418,6 +455,7 @@
     let playbarButton;
     let profileItem;
     let nativeLayout;
+    let immersiveMotion;
 
     const clamp = (value, max) => Math.min(max, Math.max(0, Number.isFinite(value) ? value : 0));
     const updateText = (node, text) => {
@@ -474,7 +512,7 @@
       if (forceExtras || now - lastExtras >= PLAYER_FALLBACK_DELAY) {
         lastExtras = now;
         syncPlaybackButtons(state);
-        syncQueue(state);
+        if (!stopQueue) syncQueue(state);
       }
     }
 
@@ -534,23 +572,37 @@
       }
     }
 
+    function queueTracks(tracks) {
+      const occurrences = new Map();
+      return tracks.filter((item) =>
+        typeof item?.uri === "string" && item.uri && !/^spotify:(?:delimiter|separator)(?::|$)/.test(item.uri),
+      ).map((item) => {
+        const occurrence = (occurrences.get(item.uri) ?? 0) + 1;
+        occurrences.set(item.uri, occurrence);
+        return { key: item.uid || item.uri + "#" + occurrence, ...trackDetails(item) };
+      });
+    }
+
     function syncQueue(state) {
-      if (ui.queue.hidden) return;
-      const queue = spicetify.Queue;
-      // O cliente 1.3.9 também fornece as próximas faixas no estado nativo.
-      const next = Array.isArray(queue?.nextTracks) ? queue.nextTracks : state?.nextItems;
-      const tracks = Array.isArray(next) ? next.filter((item) =>
-        item?.uri && !/^spotify:(?:delimiter|separator)(?::|$)/.test(item.uri),
-      ).slice(0, QUEUE_LIMIT).map(trackDetails) : [];
-      const status = tracks.length ? "" : current && !Array.isArray(next) ?
-        "A fila está indisponível." : "Nenhuma próxima faixa na fila.";
-      const signature = JSON.stringify([status, tracks]);
-      if (signature === queueSignature) return;
-      queueSignature = signature;
+      if (!dialog.open || document.hidden || ui.queue.hidden) return;
+      const queue = readQueue(spicetify, state ?? readPlayerState());
+      const manual = queueTracks(queue?.manual ?? []);
+      const next = queueTracks(queue?.next ?? []);
+      const status = manual.length || next.length ? "" :
+        queue ? "Nenhuma próxima faixa na fila." : "A fila está indisponível.";
+      const manualSignature = JSON.stringify(manual);
+      const nextSignature = JSON.stringify(next);
+      if (queueSnapshot?.status === status && queueSnapshot.manual === manualSignature &&
+          queueSnapshot.next === nextSignature) return;
       updateText(ui.queueStatus, status);
       ui.queueStatus.hidden = !status;
-      ui.queueTracks.replaceChildren(...tracks.map(({ title, artist, artwork }) => {
+      ui.queueScroll.hidden = Boolean(status);
+      ui.queueManualGroup.hidden = !manual.length;
+      ui.queueNextGroup.hidden = !next.length;
+      ui.queueNextHeading.hidden = !manual.length;
+      const rowFor = ({ title, artist, artwork }, arriving) => {
         const row = document.createElement("li");
+        if (arriving) row.setAttribute("data-aura-queue-arrival", "");
         const cover = document.createElement("span");
         cover.className = "aura-queue-cover";
         if (artwork) {
@@ -558,6 +610,7 @@
           image.alt = "";
           image.referrerPolicy = "no-referrer";
           image.decoding = "async";
+          image.loading = "lazy";
           image.addEventListener("error", () => image.remove(), { once: true });
           image.src = artwork;
           cover.append(image);
@@ -575,11 +628,21 @@
         }
         row.append(cover, details);
         return row;
-      }));
+      };
+      if (queueSnapshot?.manual !== manualSignature) {
+        const updating = queueSnapshot !== undefined;
+        ui.queueManual.replaceChildren(...manual.map((item) => rowFor(item, updating && !manualQueueKeys.has(item.key))));
+        manualQueueKeys = new Set(manual.map((item) => item.key));
+      }
+      if (queueSnapshot?.next !== nextSignature) {
+        ui.queueTracks.replaceChildren(...next.map((item) => rowFor(item, false)));
+      }
+      queueSnapshot = { status, manual: manualSignature, next: nextSignature };
     }
 
     function syncTrack(track) {
       const changedTrack = current?.uri !== track?.uri;
+      const animateTrack = Boolean(changedTrack && current && track && ui.settings.hidden);
       current = track;
       const { title, artist, album, artwork, primaryArtist } = trackDetails(current);
       lyricsTrack = current ? { uri: current.uri, title: current.name || current.metadata?.title || "", artist, primaryArtist, album } : null;
@@ -604,6 +667,10 @@
       syncBackground();
       paintProgress();
       if (changedTrack) showControls();
+      if (animateTrack) {
+        immersiveMotion?.wave(ui.cover.closest(".aura-record"), 310);
+        immersiveMotion?.reveal(ui.title.parentElement, 7);
+      }
     }
 
     const playerEvents = ["songchange", "onplaypause", "onprogress"];
@@ -611,6 +678,7 @@
     function onPlayerEvent(event) {
       lastPlayerEvent = performance.now();
       syncProgress(event?.type !== "onprogress");
+      if (stopQueue && event?.type === "songchange") syncQueue();
     }
 
     function observePlayer() {
@@ -623,11 +691,15 @@
         else player.removeEventListener(type, onPlayerEvent);
       }
       if (listening) {
+        stopQueue = observeQueue(spicetify, () => syncQueue());
+        syncQueue();
         onPlayerEvent();
         playerTimer = setInterval(() => {
           if (performance.now() - lastPlayerEvent >= PLAYER_FALLBACK_DELAY) syncProgress();
         }, PLAYER_FALLBACK_DELAY);
       } else {
+        stopQueue?.();
+        stopQueue = undefined;
         clearInterval(playerTimer);
         playing = false;
         dialog.removeAttribute("data-playing");
@@ -678,6 +750,7 @@
     }
 
     function syncPanels() {
+      const queueWasHidden = ui.queue.hidden;
       const below = prefs.lyricsPosition === "below";
       const parent = below ? ui.scene : ui.side;
       if (ui.lyrics.parentElement !== parent) parent.append(ui.lyrics);
@@ -686,6 +759,7 @@
       ui.side.hidden = ui.queue.hidden && !sideLyrics;
       dialog.toggleAttribute("data-no-side", ui.side.hidden);
       dialog.toggleAttribute("data-side-lyrics", sideLyrics);
+      if (queueWasHidden && !ui.queue.hidden) syncQueue();
     }
 
     function syncSettings() {
@@ -704,6 +778,7 @@
       ui.nativeBackgroundMode.disabled = !prefs.nativeLayout;
       for (const setting of Object.keys(VISUAL_RANGES)) paintRange(ui[setting], prefs[setting], prefs[setting] + "%");
       dialog.toggleAttribute("data-reduced", prefs.reduceMotion);
+      if (prefs.reduceMotion) immersiveMotion?.clear();
       applyVisualRanges(prefs);
       syncAccent();
       syncPanels();
@@ -740,9 +815,9 @@
       showControls();
       if (!open) {
         lyricsView?.clear();
-        syncQueue(readPlayerState());
         return;
       }
+      immersiveMotion?.reveal(ui.lyrics);
       if (stacked.matches || prefs.lyricsPosition === "below") ui.lyrics.scrollIntoView({ block: "nearest" });
       if (lyricsView) {
         paintProgress();
@@ -762,6 +837,7 @@
     }
 
     function openSettings() {
+      immersiveMotion?.clear();
       syncSettings();
       ui.settingStatus.textContent = "";
       ui.settings.hidden = false;
@@ -770,6 +846,7 @@
       ui.shell.inert = true;
       resetParallax();
       ui.settingsBack.focus();
+      immersiveMotion?.reveal(ui.settings.firstElementChild, 7);
       showControls();
     }
 
@@ -786,6 +863,7 @@
 
     function closeView() {
       if (dialog.open) dialog.close();
+      immersiveMotion?.clear();
       if (!ui.lyrics.hidden) toggleLyrics();
       if (!ui.settings.hidden) closeSettings(false);
       clearTimeout(releaseTimer);
@@ -794,7 +872,9 @@
       current = undefined;
       cover = "";
       syncAccent();
-      queueSignature = undefined;
+      queueSnapshot = undefined;
+      manualQueueKeys.clear();
+      ui.queueManual.replaceChildren();
       ui.queueTracks.replaceChildren();
       showImage(ui.cover, "");
       showImage(ui.dockCover, "");
@@ -813,6 +893,7 @@
       }
       dialog.showModal();
       observePlayer();
+      immersiveMotion?.reveal(ui.stage, 7);
     }
 
     function dismissView() {
@@ -1000,6 +1081,11 @@
     dialog.addEventListener("close", () => {
       if (!dialog.open) closeView();
     }, eventOptions);
+    dialog.addEventListener("click", (event) => {
+      const button = event.target instanceof Element && event.target.closest("button");
+      if (!button || button.disabled || !ui.settings.hidden || button === ui.exit) return;
+      immersiveMotion?.wave(event.detail ? { x: event.clientX, y: event.clientY } : button, 92);
+    }, { ...eventOptions, capture: true });
     for (const event of ["pointermove", "pointerdown", "keydown", "focusin"]) {
       dialog.addEventListener(event, showControls, eventOptions);
     }
@@ -1024,6 +1110,14 @@
       profileItem.register();
     }, playbarButton ? 2000 : 0);
     syncSettings();
+    import("./node_modules/aura-native/motion.mjs").then(({ createMotion }) => {
+      if (lifetime.signal.aborted) return;
+      immersiveMotion = createMotion({
+        host: dialog,
+        signal: lifetime.signal,
+        enabled: () => dialog.open && !prefs.reduceMotion,
+      });
+    }).catch((error) => console.warn("[AURA] Animações do modo imersivo indisponíveis.", error));
     if (document.querySelector(".body-drag-top") || document.documentElement.classList.contains("spotify__container--is-desktop")) {
       import("./node_modules/aura-native/view.mjs").then(({ createNativeLayout }) => {
         if (lifetime.signal.aborted) return;
@@ -1034,6 +1128,12 @@
           setLayout: (enabled) => savePreferences({ nativeLayout: enabled }),
           setLiveBackground: (enabled) => savePreferences({ nativeCutouts: enabled }),
           getBackdrop: () => prefs.background || trackDetails(trackFromState(readPlayerState())).artwork,
+          getTrack: () => {
+            const track = trackFromState(readPlayerState());
+            if (!track) return null;
+            const thumbnail = artworkUrl(track.metadata?.image_small_url) || artworkUrl(track.metadata?.image_url);
+            return { uri: track.uri, artwork: thumbnail || trackDetails(track).artwork };
+          },
         });
       }).catch((error) => console.warn("[AURA] Layout da janela normal indisponível.", error));
     }
