@@ -167,9 +167,13 @@
 
 #aura-immersive .aura-label {
   position: absolute;
-  inset: 28%;
+  inset: 0;
   overflow: hidden;
   border-radius: 50%;
+}
+
+#aura-immersive .aura-label:has(img[hidden]) {
+  inset: 28%;
   background: radial-gradient(circle, #201724 0 3%, transparent 4%),
     repeating-radial-gradient(circle, #574355 0 15%, #4f3b4d 16% 18%, #574355 19% 30%);
   box-shadow: 0 0 0 2px rgb(8 5 13 / 78%), 0 0 0 3px rgb(255 239 255 / 16%);
@@ -178,11 +182,18 @@
 #aura-immersive .aura-label img { display: block; width: 100%; height: 100%; object-fit: cover; }
 #aura-immersive .aura-label::after {
   position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-radial-gradient(circle, transparent 0 7px, rgb(13 10 18 / 15%) 8px, transparent 9px);
+  box-shadow: inset 0 0 0 2px rgb(13 10 18 / 58%), inset 0 0 1.5rem rgb(13 10 18 / 28%);
+  content: "";
+}
+
+#aura-immersive .aura-label:has(img[hidden])::after {
   inset: 47.5%;
   border: 1px solid rgb(255 239 255 / 28%);
-  border-radius: 50%;
   background: #110e16;
-  content: "";
+  box-shadow: none;
 }
 
 #aura-immersive .aura-track { min-width: 0; }
