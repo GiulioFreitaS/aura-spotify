@@ -768,3 +768,164 @@
   #aura-immersive[data-playing]:not([data-no-effects]) .aura-turntable::before { animation: none; }
   #aura-immersive :is(.aura-turntable, .aura-chrome) { transform: none; transition: none; }
 }
+
+
+/* AURA na janela normal do Spotify */
+.aura-native-background { display: none; }
+
+html[data-aura-native] {
+  --aura-normal-glass: rgb(33 26 37 / 76%);
+  --aura-normal-edge: rgb(255 243 229 / 19%);
+  --aura-normal-gap: clamp(12px, 1.45vw, 28px);
+  --aura-normal-side-y: clamp(12px, 2.9vh, 32px);
+  --aura-normal-warmth: #ebc8a6;
+}
+
+html[data-aura-native] .aura-native-background {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 25% 20%, #554052, transparent 67%),
+    linear-gradient(132deg, #211b2b, #120f19 85%);
+}
+
+html[data-aura-native] .aura-native-background img {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  object-fit: cover;
+  filter: blur(46px) saturate(.78);
+  opacity: .82;
+}
+
+html[data-aura-native-local] .aura-native-background img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: saturate(.86);
+  opacity: 1;
+}
+
+html[data-aura-native] .aura-native-background::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(18 13 22 / 53%), rgb(18 13 22 / 19%) 35%, rgb(18 13 22 / 54%));
+  content: "";
+}
+
+html[data-aura-native] #main { position: relative; background: transparent; }
+
+html[data-aura-native] .Root__top-container {
+  --panel-gap: var(--aura-normal-gap);
+  padding: 0 clamp(18px, 2.2vw, 46px) var(--aura-normal-gap);
+  background: transparent;
+}
+
+html[data-aura-native] .Root__globalNav {
+  margin-inline: calc(-1 * clamp(18px, 2.2vw, 46px));
+  margin-block: 0;
+  padding-block: 5px;
+  height: 60px;
+  background: linear-gradient(180deg, rgb(22 18 27 / 85%), rgb(22 18 27 / 45%));
+}
+
+html[data-aura-native] :is(.Root__nav-bar, .Root__main-view, .Root__right-sidebar, .Root__now-playing-bar) {
+  border: 1px solid var(--aura-normal-edge);
+  border-radius: 21px;
+  background:
+    linear-gradient(148deg, rgb(245 222 203 / 12%), transparent 54%),
+    var(--aura-normal-glass);
+  box-shadow: 0 18px 46px rgb(8 5 13 / 39%), inset 0 1px rgb(255 246 233 / 9%);
+  backdrop-filter: blur(18px) saturate(1.1);
+}
+
+html[data-aura-native] .Root__nav-bar {
+  width: clamp(clamp(188px, 13.6vw, 247px), calc(var(--left-sidebar-width, 227) * 1px), 285px);
+  margin-block: var(--aura-normal-side-y) 8px;
+  transform: perspective(1250px) rotateY(11deg);
+}
+
+html[data-aura-native] .Root__right-sidebar {
+  margin-block: var(--aura-normal-side-y) 8px;
+  transform: perspective(1250px) rotateY(-11deg);
+}
+
+html[data-aura-native] .Root__right-sidebar-peek { background: transparent; border-radius: inherit; }
+html[data-aura-native] .Root__main-view { border-radius: 24px; }
+html[data-aura-native] .Root__main-view :is(.main-view-container, .main-view-container__scroll-node-child) { background-color: transparent; }
+
+html[data-aura-native] .Root__now-playing-bar {
+  width: min(100%, 67rem);
+  justify-self: center;
+  align-self: end;
+  margin: 0;
+  padding: 9px clamp(10px, 1.4vw, 24px);
+  border-radius: 25px;
+}
+
+html[data-aura-native] .main-yourLibraryX-library,
+html[data-aura-native] .main-yourLibraryX-entryPoints,
+html[data-aura-native] .main-yourLibraryX-libraryContainer { border-radius: inherit; background: transparent; }
+
+html[data-aura-native] .main-yourLibraryX-libraryItemContainer {
+  position: relative;
+  isolation: isolate;
+}
+
+html[data-aura-native] .main-yourLibraryX-libraryItemContainer:has(.aura-arc-list)::before {
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  inset-inline-start: -168px;
+  width: 250px;
+  border: 1px solid rgb(246 218 191 / 20%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 100% 50%, rgb(245 210 181 / 9%), transparent 53%);
+  pointer-events: none;
+  content: "";
+}
+
+html[data-aura-native] .aura-arc-scroll { scrollbar-width: thin; cursor: grab; }
+html[data-aura-native] .aura-arc-scroll:active { cursor: grabbing; }
+
+html[data-aura-native] .aura-arc-list .main-yourLibraryX-listItem {
+  width: calc(100% - 45px);
+  translate: var(--aura-arc-x, 0);
+  scale: var(--aura-arc-scale, 1);
+  transform-origin: left center;
+  border-radius: 12px;
+}
+
+html[data-aura-native] .aura-arc-list .main-yourLibraryX-listItem:hover,
+html[data-aura-native] .aura-arc-list .main-yourLibraryX-listItem:focus-within,
+html[data-aura-native] .aura-arc-list [data-aura-arc-current] {
+  background: linear-gradient(95deg, rgb(231 186 147 / 22%), rgb(255 245 231 / 5%));
+}
+
+html[data-aura-native] .aura-arc-list .x-entityImage-imageContainer {
+  rotate: var(--aura-arc-tilt, 0deg);
+}
+
+html[data-aura-native] .Root__nav-bar [data-aura-library-filter] { order: -1; }
+
+html[data-aura-native] .aura-arc-list [data-aura-arc-current] img {
+  box-shadow: 0 0 0 1px rgb(245 218 191 / 44%), 0 4px 13px rgb(13 9 17 / 45%);
+}
+
+html[data-aura-native][data-aura-cutouts] .aura-native-background { display: none; }
+
+html[data-aura-native][data-aura-cutouts] {
+  --aura-normal-glass: #221d27;
+}
+
+html[data-aura-native][data-aura-cutouts] .Root__globalNav { background: #1c1721; }
+
+@media (max-width: 74rem) {
+  html[data-aura-native] .Root__nav-bar { width: 182px; transform: perspective(1250px) rotateY(7deg); }
+  html[data-aura-native] .Root__right-sidebar { transform: perspective(1250px) rotateY(-7deg); }
+}

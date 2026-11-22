@@ -1,6 +1,6 @@
 # AURA
 
-AURA é um tema e uma extensão para o Spotify desktop no Windows. O modo imersivo reúne três painéis de vidro em perspectiva, um disco com a capa da faixa e uma barra flutuante de reprodução. A busca e a biblioteca levam às telas do Spotify.
+AURA é um tema e uma extensão para o Spotify desktop no Windows. A janela normal pode usar biblioteca curva, página central, painel da faixa e player flutuante. O modo imersivo tem o disco com a capa, letras e controles próprios.
 
 ## Compatibilidade
 
@@ -45,7 +45,9 @@ $auraTheme = Join-Path $auraThemes 'AURA'
 $auraExtension = Join-Path $auraExtensions 'aura.js'
 $auraModules = Join-Path $auraExtensions 'node_modules'
 $auraLyrics = Join-Path $auraModules 'aura-lyrics'
-if ((Test-Path -LiteralPath $auraTheme) -or (Test-Path -LiteralPath $auraExtension) -or (Test-Path -LiteralPath $auraLyrics)) {
+$auraNative = Join-Path $auraModules 'aura-native'
+if ((Test-Path -LiteralPath $auraTheme) -or (Test-Path -LiteralPath $auraExtension) -or
+    (Test-Path -LiteralPath $auraLyrics) -or (Test-Path -LiteralPath $auraNative)) {
     throw 'Já existe uma cópia do AURA no destino. Guarde os arquivos existentes antes de substituí-los.'
 }
 
@@ -57,6 +59,7 @@ New-Item -ItemType Directory -Force -Path $auraThemes, $auraModules -ErrorAction
 Copy-Item -LiteralPath '.\Themes\AURA' -Destination $auraTheme -Recurse -ErrorAction Stop
 Copy-Item -LiteralPath '.\Extensions\aura.js' -Destination $auraExtension -ErrorAction Stop
 Copy-Item -LiteralPath '.\Extensions\aura-lyrics' -Destination $auraLyrics -Recurse -ErrorAction Stop
+Copy-Item -LiteralPath '.\Extensions\aura-native' -Destination $auraNative -Recurse -ErrorAction Stop
 
 spicetify config extensions 'aura.js'
 if ($LASTEXITCODE -ne 0) { throw 'Não foi possível ativar a extensão AURA.' }
@@ -67,7 +70,27 @@ spicetify apply
 
 O botão **AURA · Modo imersivo** tem ícone de disco e fica nos controles à direita da barra de reprodução. Se a barra não aceitar o botão, procure **AURA · Modo imersivo** no menu do perfil. O atalho inicial é **Ctrl + Alt + A**, com o Alt esquerdo no teclado ABNT2. [Temas](https://spicetify.app/docs/customization/themes) · [Extensões](https://spicetify.app/docs/customization/extensions)
 
-Para atualizar uma instalação do Marco 1, guarde cópias de `aura.js` e `Themes/AURA/user.css` já instalados. Substitua esses dois arquivos, copie `Extensions/aura-lyrics` para `Extensions/node_modules/aura-lyrics` na pasta de configuração do Spicetify e execute `spicetify apply`. A CLI disponibiliza os módulos ao Spotify. [Módulos do Spicetify](https://spicetify.app/docs/development/js-modules)
+Para atualizar, guarde cópias de `aura.js`, `Themes/AURA/user.css` e dos módulos já instalados. Atualize esses arquivos e copie os módulos `aura-lyrics` e `aura-native` para `Extensions/node_modules` na pasta de configuração do Spicetify. Preserve o `bridge-config.mjs` gerado dentro de `aura-native`, se existir. Execute `spicetify apply` para disponibilizar os arquivos ao Spotify. [Módulos do Spicetify](https://spicetify.app/docs/development/js-modules)
+
+## Painéis na janela normal
+
+O ícone do AURA no cabeçalho ou **AURA · Layout em painéis** no perfil alterna o layout normal. Na biblioteca, use **Playlists** e **Álbuns** e role com a rodinha ou arraste a lista. A capa em destaque acompanha o centro do arco. Selecione um item para abrir sua página no Spotify.
+
+**Desktop ao vivo** usa um recorte reversível da janela do Spotify 1.3.9.2055 do instalador desktop. O auxiliar usa Python 3 pelo iniciador `py.exe`. Ele cria os vãos que deixam aparecer o conteúdo real atrás da janela. O modo imersivo e as janelas estreitas usam a janela completa. Com o auxiliar desligado, os vãos dos painéis mostram o fundo do AURA. [Regiões de janela do Windows](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
+
+**PowerShell · abrir o Spotify e iniciar o recorte**
+
+```powershell
+.\Windows\Iniciar-AURA.ps1
+```
+
+Se o Spotify já estava aberto na primeira ativação do auxiliar, feche e abra o Spotify uma vez para carregar a configuração local. Para desligar o recorte, use **Modo imersivo → Ajustes → Janela normal do Spotify → Desktop visível entre os painéis** ou pare o auxiliar.
+
+**PowerShell · parar o auxiliar e restaurar a janela**
+
+```powershell
+.\Windows\Iniciar-AURA.ps1 -Parar
+```
 
 ## HUD e ajustes
 

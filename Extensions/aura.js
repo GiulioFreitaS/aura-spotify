@@ -7,9 +7,11 @@
     lyricsSize: 100, lyricsPosition: "side", showClock: true, showQueue: true,
     reduceMotion: false, autoHide: false,
   };
-  const DEFAULTS = { version: 3, modifiers: "ctrl-alt", key: "A", background: null, lyricsOffsetMs: 0, ...VISUAL_DEFAULTS };
+  const NATIVE_DEFAULTS = { nativeLayout: true, nativeCutouts: true };
+  const DEFAULTS = { version: 4, modifiers: "ctrl-alt", key: "A", background: null, lyricsOffsetMs: 0, ...VISUAL_DEFAULTS, ...NATIVE_DEFAULTS };
   const VISUAL_RANGES = { dim: [0, 80], discSize: [70, 116], depth: [0, 100], lyricsSize: [80, 135] };
   const VISUAL_TOGGLES = ["showClock", "showQueue", "reduceMotion", "autoHide"];
+  const TOGGLES = [...VISUAL_TOGGLES, ...Object.keys(NATIVE_DEFAULTS)];
   const HEX_COLOR = /^#[a-f\d]{6}$/i;
   const MAX_IMAGE_INPUT = 18 * 1024 * 1024;
   const MAX_IMAGE_DATA = 1_400_000;
@@ -176,6 +178,13 @@
               <select data-aura="key" aria-label="Letra do atalho"></select>
             </div>
           </fieldset>
+          <fieldset>
+            <legend>Janela normal do Spotify</legend>
+            <div class="aura-setting-toggles">
+              <label><input type="checkbox" data-aura="nativeLayout">Layout em painéis</label>
+              <label><input type="checkbox" data-aura="nativeCutouts">Desktop visível entre os painéis</label>
+            </div>
+          </fieldset>
         </div>
         <footer class="aura-settings-footer">
           <button type="button" data-aura="resetVisual">Restaurar visual do AURA</button>
@@ -185,13 +194,13 @@
     </section>`;
 
   function validatePreferences(value) {
-    if (![1, 2, DEFAULTS.version].includes(value?.version)) return { ...DEFAULTS };
+    if (![1, 2, 3, DEFAULTS.version].includes(value?.version)) return { ...DEFAULTS };
     const { modifiers, key, background, lyricsOffsetMs } = value;
-    const visual = { ...VISUAL_DEFAULTS };
+    const visual = { ...VISUAL_DEFAULTS, ...NATIVE_DEFAULTS };
     for (const [setting, [min, max]] of Object.entries(VISUAL_RANGES)) {
       if (Number.isInteger(value[setting]) && value[setting] >= min && value[setting] <= max) visual[setting] = value[setting];
     }
-    for (const setting of VISUAL_TOGGLES) {
+    for (const setting of TOGGLES) {
       if (typeof value[setting] === "boolean") visual[setting] = value[setting];
     }
     return {
@@ -401,6 +410,7 @@
     let imageRequest = 0;
     let playbarButton;
     let profileItem;
+    let nativeLayout;
 
     const clamp = (value, max) => Math.min(max, Math.max(0, Number.isFinite(value) ? value : 0));
     const updateText = (node, text) => {
@@ -682,7 +692,8 @@
       ui.accent.value = prefs.accent;
       ui.accent.disabled = prefs.colorMode !== "manual";
       ui.lyricsPosition.value = prefs.lyricsPosition;
-      for (const setting of VISUAL_TOGGLES) ui[setting].checked = prefs[setting];
+      for (const setting of TOGGLES) ui[setting].checked = prefs[setting];
+      ui.nativeCutouts.disabled = !prefs.nativeLayout;
       for (const setting of Object.keys(VISUAL_RANGES)) paintRange(ui[setting], prefs[setting], prefs[setting] + "%");
       dialog.toggleAttribute("data-reduced", prefs.reduceMotion);
       applyVisualRanges(prefs);
@@ -707,6 +718,7 @@
       }
       syncSettings();
       syncBackground();
+      nativeLayout?.refresh();
       showControls();
       if (dialog.open) syncProgress(true);
     }
@@ -899,7 +911,7 @@
     for (const setting of ["modifiers", "key", "colorMode", "lyricsPosition", "accent"]) {
       ui[setting].addEventListener("change", () => savePreferences({ [setting]: ui[setting].value }), eventOptions);
     }
-    for (const setting of VISUAL_TOGGLES) {
+    for (const setting of TOGGLES) {
       ui[setting].addEventListener("change", () => savePreferences({ [setting]: ui[setting].checked }), eventOptions);
     }
     for (const setting of Object.keys(VISUAL_RANGES)) {
@@ -1001,6 +1013,18 @@
       profileItem.register();
     }, playbarButton ? 2000 : 0);
     syncSettings();
+    if (document.querySelector(".body-drag-top") || document.documentElement.classList.contains("spotify__container--is-desktop")) {
+      import("./node_modules/aura-native/view.mjs").then(({ createNativeLayout }) => {
+        if (lifetime.signal.aborted) return;
+        nativeLayout = createNativeLayout({
+          spicetify,
+          signal: lifetime.signal,
+          preferences: () => prefs,
+          setLayout: (enabled) => savePreferences({ nativeLayout: enabled }),
+          getBackdrop: () => prefs.background || trackDetails(trackFromState(readPlayerState())).artwork,
+        });
+      }).catch((error) => console.warn("[AURA] Layout da janela normal indisponível.", error));
+    }
 
     window.addEventListener("pagehide", () => {
       closeView();
@@ -1015,8 +1039,13 @@
   function init(attempt = 0) {
     const spicetify = globalThis.Spicetify;
     if (document.getElementById(THEME_ID)) return;
-    if (!document.body || !spicetify?.Player?.addEventListener ||
-        !spicetify.Platform?.History || !spicetify.LocalStorage) {
+    let ready = document.body && spicetify?.Player?.addEventListener &&
+      spicetify.Platform?.History && spicetify.LocalStorage;
+    if (ready) {
+      try { spicetify.Player.getProgress(); }
+      catch { ready = false; }
+    }
+    if (!ready) {
       if (attempt < 80) setTimeout(() => init(attempt + 1), 250);
       else console.warn("[AURA] As APIs necessárias do Spicetify não carregaram.");
       return;
