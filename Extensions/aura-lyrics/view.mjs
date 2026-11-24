@@ -1,18 +1,5 @@
 import { createLyricsService, trackKey } from "./index.mjs";
 
-const STATUS = {
-  missing: "Letra indisponível para esta faixa.",
-  mismatch: "A letra encontrada não corresponde a esta versão da faixa.",
-  unsupported: "A busca de letras está disponível para músicas do catálogo.",
-  unavailable: "A fonte de letras está indisponível agora.",
-};
-
-const KIND_LABEL = {
-  word: "Por palavra",
-  line: "Por linha",
-  plain: "Sem sincronização",
-};
-
 function lastStarted(lines, time) {
   let low = 0;
   let high = lines.length;
@@ -52,8 +39,19 @@ function lyricRow(line) {
   return { row, words };
 }
 
-export function createLyricsView(panel, signal, motionDisabled = () => false) {
+export function createLyricsView(panel, signal, motionDisabled, text) {
   const service = createLyricsService();
+  const statusMessages = {
+    missing: text.lyricsMissing,
+    mismatch: text.lyricsMismatch,
+    unsupported: text.lyricsUnsupported,
+    unavailable: text.lyricsSourceUnavailable,
+  };
+  const kindLabels = {
+    word: text.lyricsByWord,
+    line: text.lyricsByLine,
+    plain: text.lyricsUnsynced,
+  };
   const ui = Object.fromEntries([...panel.querySelectorAll("[data-lyrics]")].map(
     (node) => [node.dataset.lyrics, node],
   ));
@@ -81,9 +79,9 @@ export function createLyricsView(panel, signal, motionDisabled = () => false) {
 
     ui.meta.hidden = !next;
     ui.source.href = next?.source.url ?? "https://lrclib.net/";
-    ui.kind.textContent = KIND_LABEL[next?.kind] ?? "";
+    ui.kind.textContent = kindLabels[next?.kind] ?? "";
     ui.kind.hidden = !ui.kind.textContent;
-    ui.status.textContent = status ?? (next?.kind === "instrumental" ? "Faixa instrumental" : STATUS[next?.reason] ?? "");
+    ui.status.textContent = status ?? (next?.kind === "instrumental" ? text.lyricsInstrumental : statusMessages[next?.reason] ?? "");
     ui.status.hidden = !ui.status.textContent;
     ui.retry.hidden = next?.reason !== "unavailable" || !next.retryAt;
     if (!ui.retry.hidden) {
@@ -139,11 +137,11 @@ export function createLyricsView(panel, signal, motionDisabled = () => false) {
     request?.abort();
     const controller = new AbortController();
     request = controller;
-    render(null, "Buscando letra…");
+    render(null, text.lyricsSearching);
     service.lookup(requestTrack, controller.signal).then((next) => {
       if (request === controller && next) render(next);
     }, () => {
-      if (request === controller) render(null, STATUS.unavailable);
+      if (request === controller) render(null, statusMessages.unavailable);
     });
   }
 
@@ -170,8 +168,8 @@ export function createLyricsView(panel, signal, motionDisabled = () => false) {
       requestTrack = next;
       request?.abort();
       request = undefined;
-      if (!next) render(null, "Toque uma faixa para ver a letra.");
-      else if (nextKey === "unsupported") render(null, STATUS.unsupported);
+      if (!next) render(null, text.lyricsEmpty);
+      else if (nextKey === "unsupported") render(null, statusMessages.unsupported);
       else lookup();
     },
     updateTime(positionMs, offsetMs) {

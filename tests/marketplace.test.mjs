@@ -23,7 +23,7 @@ test("o manifesto aponta para o tema, a paleta, a prévia e o bundle público", 
   assert.doesNotMatch(bundle, /(?:bridge-config\.mjs|\/layout\/v1|Desktop ao vivo)/);
 });
 
-test("o bundle monta os painéis sem marcadores de plataforma e abre o vinil, a fila e as letras", { timeout: 40_000 }, async (t) => {
+async function exerciseBundle(t, locale, labels) {
   const browser = await chromium.launch({ executablePath: process.env.AURA_TEST_CHROMIUM });
   t.after(() => browser.close());
   const page = await browser.newPage({
@@ -33,7 +33,7 @@ test("o bundle monta os painéis sem marcadores de plataforma e abre o vinil, a 
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.route(albumArt, (route) => route.fulfill({
-    contentType: "image/jpeg",
+    contentType: "image/png",
     headers: { "Access-Control-Allow-Origin": "*" },
     body: wallpaper,
   }));
@@ -52,7 +52,7 @@ test("o bundle monta os painéis sem marcadores de plataforma e abre o vinil, a 
 
   await page.setContent('<main id="main"></main>');
   await page.addStyleTag({ content: stylesheet });
-  await page.evaluate((artwork) => {
+  await page.evaluate(({ artwork, locale }) => {
     const track = {
       uri: "spotify:track:auratest",
       name: "Faixa de teste",
@@ -62,7 +62,9 @@ test("o bundle monta os painéis sem marcadores de plataforma e abre o vinil, a 
     const preferences = new Map([["aura:preferences", JSON.stringify({
       version: 4, nativeLayout: true, nativeCutouts: true, reduceMotion: true,
     })]]);
+    document.documentElement.lang = "en";
     globalThis.Spicetify = {
+      Locale: locale === "en-GB" ? { getLocale: () => locale } : undefined,
       Player: {
         data: {
           item: track,
@@ -80,13 +82,13 @@ test("o bundle monta os painéis sem marcadores de plataforma e abre o vinil, a 
         getMute: () => false,
         formatTime: (ms) => Math.floor(ms / 60_000) + ":00",
       },
-      Platform: { History: { location: { pathname: "/" }, listen: () => () => {} } },
+      Platform: { Session: { locale: "pt-BR" }, History: { location: { pathname: "/" }, listen: () => () => {} } },
       LocalStorage: {
         get: (key) => preferences.get(key),
         set: (key, value) => preferences.set(key, value),
       },
     };
-  }, albumArt);
+  }, { artwork: albumArt, locale });
   await page.addScriptTag({ content: bundle });
 
   await page.locator("#aura-immersive").waitFor({ state: "attached" });
@@ -102,22 +104,30 @@ test("o bundle monta os painéis sem marcadores de plataforma e abre o vinil, a 
   assert.equal(await page.locator(".aura-native-background img").getAttribute("src"), albumArt);
 
   await page.keyboard.press("Control+Alt+KeyA");
-  await page.locator("#aura-immersive[open]").waitFor();
+  const immersive = page.locator("#aura-immersive[open]");
+  await immersive.waitFor();
+  assert.equal(await immersive.getAttribute("lang"), labels.lang);
   assert.equal(await page.locator('[data-aura="title"]').textContent(), "Faixa de teste");
+  await page.getByRole("heading", { name: labels.upNext, exact: true }).waitFor();
+  await page.getByText(labels.playing, { exact: true }).waitFor();
   await page.getByText("Próxima faixa", { exact: true }).waitFor();
   await page.locator('[data-aura="lyricsButton"]').click();
   await page.getByText("Linha de teste", { exact: true }).waitFor();
+  await page.getByText(labels.lineSynced, { exact: true }).waitFor();
 
-  await page.locator('[data-aura="settingsButton"]').click();
+  await page.getByRole("button", { name: labels.settings, exact: true }).click();
+  await page.getByRole("heading", { name: labels.settings, exact: true }).waitFor();
+  await page.getByRole("button", { name: labels.chooseImage, exact: true }).waitFor();
   await page.locator('#aura-immersive input[type="file"]').setInputFiles({
-    name: "fundo.jpg",
-    mimeType: "image/jpeg",
+    name: "fundo.png",
+    mimeType: "image/png",
     buffer: wallpaper,
   });
   const localBackdrop = '.aura-native-background img[src^="data:image/jpeg;base64,"]';
   await page.locator(localBackdrop).waitFor({ state: "attached" });
   assert.equal(await page.locator('select option[value="desktop"]').count(), 0);
-  await page.locator('[data-aura="useCover"]').click();
+  await page.getByText(labels.localImage, { exact: true }).waitFor();
+  await page.getByRole("button", { name: labels.useAlbumCover, exact: true }).click();
   await page.locator('.aura-native-background img[src^="https:"]').waitFor({ state: "attached" });
 
   await page.keyboard.press("Escape");
@@ -126,4 +136,20 @@ test("o bundle monta os painéis sem marcadores de plataforma e abre o vinil, a 
   await page.setViewportSize({ width: 950, height: 720 });
   await page.locator("html[data-aura-native]").waitFor({ state: "detached" });
   assert.deepEqual(errors, []);
+}
+
+test("os painéis, o modo imersivo e os ajustes usam o português da sessão do Spotify", { timeout: 40_000 }, (t) => {
+  return exerciseBundle(t, "pt-BR", {
+    lang: "pt-BR", upNext: "A seguir", playing: "Em reprodução", lineSynced: "Por linha",
+    settings: "Ajustes", chooseImage: "Escolher imagem", useAlbumCover: "Usar capa do álbum",
+    localImage: "Imagem local em uso",
+  });
+});
+
+test("o idioma inglês do Spotify prevalece nos painéis, nos ajustes e nos estados do player", { timeout: 40_000 }, (t) => {
+  return exerciseBundle(t, "en-GB", {
+    lang: "en", upNext: "Up next", playing: "Playing", lineSynced: "Line synced",
+    settings: "Settings", chooseImage: "Choose image", useAlbumCover: "Use album cover",
+    localImage: "Using a local image",
+  });
 });

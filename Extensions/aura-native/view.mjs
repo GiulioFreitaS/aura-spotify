@@ -52,7 +52,7 @@ function changesLayout(records) {
 }
 
 export function createNativeLayout({
-  spicetify, signal, preferences, setLayout, getBackdrop, getTrack, accentForArtwork,
+  spicetify, signal, layoutLabel, preferences, setLayout, getBackdrop, getTrack, accentForArtwork,
 }) {
   const veil = document.createElement("div");
   veil.className = "aura-native-background";
@@ -169,12 +169,11 @@ export function createNativeLayout({
   });
 
   function toggle() { setLayout(!preferences().nativeLayout); }
-  const playerLabel = "AURA · Layout em painéis";
   try {
-    if (spicetify.Topbar?.Button) button = new spicetify.Topbar.Button(playerLabel, "album", toggle);
+    if (spicetify.Topbar?.Button) button = new spicetify.Topbar.Button(layoutLabel, "album", toggle);
   } catch { /* O menu do perfil oferece o mesmo controle. */ }
   if (spicetify.Menu?.Item) {
-    menu = new spicetify.Menu.Item(playerLabel, preferences().nativeLayout, toggle, "album");
+    menu = new spicetify.Menu.Item(layoutLabel, preferences().nativeLayout, toggle, "album");
     menu.register();
   }
 

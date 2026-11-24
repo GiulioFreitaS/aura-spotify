@@ -169,9 +169,11 @@ AURA's interface uses Portuguese labels. The table shows the exact settings and 
 | Open immersive mode | Press **Ctrl + Alt + A** (Control + Option + A on macOS), or click the record icon in the player bar. The profile menu may also show **AURA · Modo imersivo**. |
 | Return to Spotify | Press **Esc** or select **Sair**. From settings, the first **Esc** returns to immersive mode. |
 | Toggle the floating panels | Use the AURA icon in the navigation bar or **AURA · Layout em painéis** in the profile menu. |
-| Change the background | Open **Ajustes** in immersive mode to choose an image or switch back to album artwork. |
-| Show lyrics | Select **Letras** in the side menu. Use **Ajustes → Letras** to change the placement or adjust the timing. |
-| Reduce animations | Open **Ajustes → Reduzir movimento**. AURA also respects your system's reduced-motion preference. |
+| Change the background | Open **Settings** in immersive mode to choose an image or switch back to album artwork. |
+| Show lyrics | Select **Lyrics** in the side menu. Use **Settings → Lyrics** to change the placement or adjust the timing. |
+| Reduce animations | Open **Settings → Reduce motion**. AURA also respects your system's reduced-motion preference. |
+
+AURA reads Spotify's language when it opens. The interface is available in English and Portuguese, with English used for other Spotify languages.
 
 While showing lyrics, AURA queries LRCLIB with the track title, artist, album, and duration. Playback position drives the highlighting when timing data is available. You can shift the lyrics up to five seconds in either direction. [Lyricsfile format](https://github.com/tranxuanthang/lyricsfile/blob/main/SPECIFICATION.md)
 

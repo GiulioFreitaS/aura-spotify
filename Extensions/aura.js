@@ -19,7 +19,103 @@
   const IDLE_DELAY = 3600;
   const PLAYER_FALLBACK_DELAY = 500;
 
-  const layout = `
+  const MESSAGES = {
+    settings: ["Ajustes", "Settings"],
+    exit: ["Sair", "Exit"],
+    exitImmersive: ["Sair do modo imersivo", "Exit immersive mode"],
+    searchSpotify: ["Buscar no Spotify", "Search Spotify"],
+    searchCatalog: ["Buscar músicas, artistas e álbuns", "Search songs, artists, and albums"],
+    navigation: ["Navegação do AURA", "AURA navigation"],
+    nowPlaying: ["Reprodução", "Now playing"],
+    lyrics: ["Letras", "Lyrics"],
+    library: ["Biblioteca", "Library"],
+    likedSongs: ["Músicas curtidas", "Liked Songs"],
+    queueAndLyrics: ["Fila e letra", "Queue and lyrics"],
+    upNext: ["A seguir", "Up next"],
+    playbackQueue: ["Fila de reprodução", "Playback queue"],
+    addedToQueue: ["Adicionadas à fila", "Added to queue"],
+    comingUp: ["Em seguida", "Coming up"],
+    upcomingTracks: ["Próximas faixas", "Upcoming tracks"],
+    lyricsHeading: ["Letra", "Lyrics"],
+    retry: ["Tentar novamente", "Try again"],
+    trackLyrics: ["Letra da faixa", "Song lyrics"],
+    playbackControls: ["Controles de reprodução", "Playback controls"],
+    likeTrack: ["Curtir faixa", "Like track"],
+    shuffle: ["Modo aleatório", "Shuffle"],
+    previousTrack: ["Faixa anterior", "Previous track"],
+    play: ["Reproduzir", "Play"],
+    nextTrack: ["Próxima faixa", "Next track"],
+    repeatOff: ["Repetição desligada", "Repeat off"],
+    trackPosition: ["Posição na faixa", "Track position"],
+    mute: ["Silenciar", "Mute"],
+    back: ["Voltar", "Back"],
+    sceneAndColor: ["Cena e cor", "Scene and color"],
+    chooseImage: ["Escolher imagem", "Choose image"],
+    useAlbumCover: ["Usar capa do álbum", "Use album cover"],
+    dimming: ["Escurecimento", "Dimming"],
+    accentColor: ["Cor de destaque", "Accent color"],
+    fromAlbumCover: ["Da capa", "From album cover"],
+    chooseAccent: ["Escolher cor de destaque", "Choose accent color"],
+    composition: ["Composição", "Layout"],
+    depth: ["Profundidade 3D e brilho decorativo", "3D depth and glow"],
+    recordSize: ["Tamanho do disco", "Record size"],
+    clock: ["Relógio", "Clock"],
+    sideQueue: ["Fila lateral", "Queue sidebar"],
+    reduceMotion: ["Reduzir movimento", "Reduce motion"],
+    autoHide: ["Recolher controles", "Auto-hide controls"],
+    lyricsPosition: ["Posição", "Position"],
+    sidePanel: ["Painel lateral", "Side panel"],
+    belowRecord: ["Abaixo do disco", "Below the record"],
+    textSize: ["Tamanho do texto", "Text size"],
+    lyricsDelay: ["Atraso (ms)", "Delay (ms)"],
+    reset: ["Zerar", "Reset"],
+    lyricsOffsetHelp: ["Valores positivos fazem a letra aparecer mais tarde.", "Positive values make lyrics appear later."],
+    keyboardShortcut: ["Atalho de teclado", "Keyboard shortcut"],
+    modifierKeys: ["Teclas modificadoras", "Modifier keys"],
+    shortcutLetter: ["Letra do atalho", "Shortcut letter"],
+    spotifyWindow: ["Janela normal do Spotify", "Spotify desktop layout"],
+    floatingPanels: ["Layout em painéis", "Floating panels"],
+    resetVisual: ["Restaurar visual do AURA", "Reset AURA appearance"],
+    imageSizeError: ["Escolha uma imagem de até 18 MiB.", "Choose an image up to 18 MiB."],
+    imageOpenError: ["Não foi possível abrir a imagem. Escolha um JPG, PNG, WebP, AVIF ou BMP.", "Could not open the image. Choose a JPG, PNG, WebP, AVIF, or BMP."],
+    untitledTrack: ["Faixa sem título", "Untitled track"],
+    noSelectedTrack: ["Nenhuma faixa selecionada", "No track selected"],
+    noTrack: ["Nenhuma faixa", "No track"],
+    immersiveMode: ["Modo imersivo", "Immersive mode"],
+    timeSeparator: [" de ", " of "],
+    buffering: ["Carregando", "Loading"],
+    playing: ["Em reprodução", "Playing"],
+    paused: ["Em pausa", "Paused"],
+    pause: ["Pausar", "Pause"],
+    repeatTrack: ["Repetir faixa", "Repeat track"],
+    repeatQueue: ["Repetir fila", "Repeat queue"],
+    unlikeTrack: ["Remover das músicas curtidas", "Remove from Liked Songs"],
+    unmute: ["Reativar som", "Unmute"],
+    emptyQueue: ["Nenhuma próxima faixa na fila.", "No upcoming tracks."],
+    queueUnavailable: ["A fila está indisponível.", "Queue unavailable."],
+    localImageActive: ["Imagem local em uso", "Using a local image"],
+    albumCoverActive: ["Capa do álbum em uso", "Using album cover"],
+    saveError: ["Não foi possível salvar os ajustes no Spotify.", "Could not save settings in Spotify."],
+    loadingLyrics: ["Carregando letras…", "Loading lyrics…"],
+    lyricsModuleError: ["O módulo de letras não pôde ser carregado.", "Could not load the lyrics module."],
+    themeRequired: ["Ative o tema AURA para abrir o modo imersivo.", "Enable the AURA theme to open immersive mode."],
+    playerError: ["O Spotify não conseguiu executar esse controle.", "Spotify could not complete this playback action."],
+    navigationError: ["Abra a Biblioteca ou a Busca pelos controles do Spotify.", "Open Your Library or Search using Spotify’s own controls."],
+    preparingImage: ["Preparando imagem…", "Preparing image…"],
+    imageStillTooLarge: ["A imagem ficou grande demais. Escolha uma imagem menor.", "The image is too large. Choose a smaller image."],
+    lyricsMissing: ["Letra indisponível para esta faixa.", "Lyrics are unavailable for this track."],
+    lyricsMismatch: ["A letra encontrada não corresponde a esta versão da faixa.", "The lyrics do not match this version of the track."],
+    lyricsUnsupported: ["A busca de letras está disponível para músicas do catálogo.", "Lyrics lookup is available for songs in the Spotify catalog."],
+    lyricsSourceUnavailable: ["A fonte de letras está indisponível agora.", "The lyrics provider is currently unavailable."],
+    lyricsByWord: ["Por palavra", "Word synced"],
+    lyricsByLine: ["Por linha", "Line synced"],
+    lyricsUnsynced: ["Sem sincronização", "Unsynced"],
+    lyricsInstrumental: ["Faixa instrumental", "Instrumental track"],
+    lyricsSearching: ["Buscando letra…", "Looking up lyrics…"],
+    lyricsEmpty: ["Toque uma faixa para ver a letra.", "Play a track to see its lyrics."],
+  };
+
+  const layout = (text) => `
     <div class="aura-background" aria-hidden="true">
       <img data-aura="background" alt="" referrerpolicy="no-referrer" hidden>
     </div>
@@ -27,21 +123,21 @@
       <header class="aura-header">
         <span class="aura-wordmark">AURA</span>
         <div class="aura-header-actions aura-chrome">
-          <button type="button" data-aura="settingsButton" aria-controls="aura-settings" aria-expanded="false"><span class="aura-icon" data-icon="settings" aria-hidden="true"></span>Ajustes</button>
-          <button type="button" data-aura="exit" class="aura-exit" aria-label="Sair do modo imersivo">Sair <kbd aria-hidden="true">Esc</kbd></button>
+          <button type="button" data-aura="settingsButton" aria-controls="aura-settings" aria-expanded="false"><span class="aura-icon" data-icon="settings" aria-hidden="true"></span>${text.settings}</button>
+          <button type="button" data-aura="exit" class="aura-exit" aria-label="${text.exitImmersive}">${text.exit} <kbd aria-hidden="true">Esc</kbd></button>
         </div>
       </header>
       <div class="aura-stage" data-aura="stage">
         <div class="aura-wing aura-wing-left aura-glass">
-          <form class="aura-search" data-aura="searchForm" role="search" aria-label="Buscar no Spotify">
-            <button type="submit" data-aura="search" aria-label="Buscar no Spotify" title="Buscar no Spotify"><span class="aura-icon" data-icon="search" aria-hidden="true"></span></button>
-            <input type="search" data-aura="query" aria-label="Buscar músicas, artistas e álbuns" placeholder="Buscar no Spotify" maxlength="120" autocomplete="off">
+          <form class="aura-search" data-aura="searchForm" role="search" aria-label="${text.searchSpotify}">
+            <button type="submit" data-aura="search" aria-label="${text.searchSpotify}" title="${text.searchSpotify}"><span class="aura-icon" data-icon="search" aria-hidden="true"></span></button>
+            <input type="search" data-aura="query" aria-label="${text.searchCatalog}" placeholder="${text.searchSpotify}" maxlength="120" autocomplete="off">
           </form>
-          <nav class="aura-nav" aria-label="Navegação do AURA">
-            <button type="button" data-aura="now" aria-controls="aura-scene" aria-pressed="true"><span class="aura-icon" data-icon="album" aria-hidden="true"></span>Reprodução</button>
-            <button type="button" data-aura="lyricsButton" aria-controls="aura-lyrics" aria-expanded="false"><span class="aura-icon" data-icon="lyrics" aria-hidden="true"></span>Letras</button>
-            <button type="button" data-aura="library"><span class="aura-icon" data-icon="library" aria-hidden="true"></span>Biblioteca</button>
-            <button type="button" data-aura="favorites"><span class="aura-icon" data-icon="heart" aria-hidden="true"></span>Músicas curtidas</button>
+          <nav class="aura-nav" aria-label="${text.navigation}">
+            <button type="button" data-aura="now" aria-controls="aura-scene" aria-pressed="true"><span class="aura-icon" data-icon="album" aria-hidden="true"></span>${text.nowPlaying}</button>
+            <button type="button" data-aura="lyricsButton" aria-controls="aura-lyrics" aria-expanded="false"><span class="aura-icon" data-icon="lyrics" aria-hidden="true"></span>${text.lyrics}</button>
+            <button type="button" data-aura="library"><span class="aura-icon" data-icon="library" aria-hidden="true"></span>${text.library}</button>
+            <button type="button" data-aura="favorites"><span class="aura-icon" data-icon="heart" aria-hidden="true"></span>${text.likedSongs}</button>
           </nav>
           <div class="aura-clock" data-aura="clock" hidden>
             <time data-aura="clockTime"></time>
@@ -65,58 +161,58 @@
             </div>
           </div>
         </section>
-        <aside class="aura-wing aura-wing-right aura-glass" data-aura="side" aria-label="Fila e letra">
+        <aside class="aura-wing aura-wing-right aura-glass" data-aura="side" aria-label="${text.queueAndLyrics}">
           <section class="aura-queue" data-aura="queue" aria-labelledby="aura-queue-title">
-            <h2 id="aura-queue-title"><span class="aura-icon" data-icon="queue" aria-hidden="true"></span>A seguir</h2>
+            <h2 id="aura-queue-title"><span class="aura-icon" data-icon="queue" aria-hidden="true"></span>${text.upNext}</h2>
             <p class="aura-queue-empty" data-aura="queueStatus" hidden></p>
-            <div class="aura-queue-scroll" data-aura="queueScroll" role="region" aria-label="Fila de reprodução" tabindex="0" hidden>
+            <div class="aura-queue-scroll" data-aura="queueScroll" role="region" aria-label="${text.playbackQueue}" tabindex="0" hidden>
               <div data-aura="queueManualGroup" hidden>
-                <h3>Adicionadas à fila</h3>
+                <h3>${text.addedToQueue}</h3>
                 <ol class="aura-queue-tracks" data-aura="queueManual"></ol>
               </div>
               <div data-aura="queueNextGroup" hidden>
-                <h3 data-aura="queueNextHeading" hidden>Em seguida</h3>
-                <ol class="aura-queue-tracks" data-aura="queueTracks" aria-label="Próximas faixas"></ol>
+                <h3 data-aura="queueNextHeading" hidden>${text.comingUp}</h3>
+                <ol class="aura-queue-tracks" data-aura="queueTracks" aria-label="${text.upcomingTracks}"></ol>
               </div>
             </div>
           </section>
           <section id="aura-lyrics" class="aura-lyrics" data-aura="lyrics" aria-labelledby="aura-lyrics-title" hidden>
             <header class="aura-lyrics-header">
-              <h2 id="aura-lyrics-title"><span class="aura-icon" data-icon="lyrics" aria-hidden="true"></span>Letra</h2>
+              <h2 id="aura-lyrics-title"><span class="aura-icon" data-icon="lyrics" aria-hidden="true"></span>${text.lyricsHeading}</h2>
               <p class="aura-lyrics-meta" data-lyrics="meta" hidden>
                 <a data-lyrics="source" href="https://lrclib.net/" target="_blank" rel="noopener noreferrer">LRCLIB</a>
                 <span data-lyrics="kind" hidden></span>
               </p>
             </header>
             <p class="aura-lyrics-status" data-lyrics="status" role="status"></p>
-            <button type="button" class="aura-lyrics-retry" data-lyrics="retry" hidden>Tentar novamente</button>
-            <div class="aura-lyrics-scroll" data-lyrics="scroll" role="region" aria-label="Letra da faixa" tabindex="0" hidden></div>
+            <button type="button" class="aura-lyrics-retry" data-lyrics="retry" hidden>${text.retry}</button>
+            <div class="aura-lyrics-scroll" data-lyrics="scroll" role="region" aria-label="${text.trackLyrics}" tabindex="0" hidden></div>
           </section>
         </aside>
       </div>
-      <footer class="aura-dock aura-glass aura-chrome" role="group" aria-label="Controles de reprodução">
+      <footer class="aura-dock aura-glass aura-chrome" role="group" aria-label="${text.playbackControls}">
         <div class="aura-dock-track">
           <div class="aura-dock-cover" aria-hidden="true"><img data-aura="dockCover" alt="" referrerpolicy="no-referrer" hidden></div>
           <div class="aura-dock-labels">
             <span data-aura="dockTitle"></span>
             <span data-aura="dockArtist" hidden></span>
           </div>
-          <button type="button" data-aura="like" aria-pressed="false" aria-label="Curtir faixa" title="Curtir faixa"><span class="aura-icon" data-aura="likeIcon" aria-hidden="true"></span></button>
+          <button type="button" data-aura="like" aria-pressed="false" aria-label="${text.likeTrack}" title="${text.likeTrack}"><span class="aura-icon" data-aura="likeIcon" aria-hidden="true"></span></button>
         </div>
         <div class="aura-actions">
-          <button type="button" data-aura="shuffle" aria-pressed="false" aria-label="Modo aleatório" title="Modo aleatório"><span class="aura-icon" data-icon="shuffle" aria-hidden="true"></span></button>
-          <button type="button" data-aura="previous" aria-label="Faixa anterior" title="Faixa anterior"><span class="aura-icon" data-icon="skip-back" aria-hidden="true"></span></button>
-          <button type="button" data-aura="play" class="aura-play" aria-label="Reproduzir"><span class="aura-icon" data-aura="playIcon" aria-hidden="true"></span></button>
-          <button type="button" data-aura="next" aria-label="Próxima faixa" title="Próxima faixa"><span class="aura-icon" data-icon="skip-forward" aria-hidden="true"></span></button>
-          <button type="button" data-aura="repeat" aria-pressed="false" aria-label="Repetição desligada" title="Repetição desligada"><span class="aura-icon" data-aura="repeatIcon" aria-hidden="true"></span></button>
+          <button type="button" data-aura="shuffle" aria-pressed="false" aria-label="${text.shuffle}" title="${text.shuffle}"><span class="aura-icon" data-icon="shuffle" aria-hidden="true"></span></button>
+          <button type="button" data-aura="previous" aria-label="${text.previousTrack}" title="${text.previousTrack}"><span class="aura-icon" data-icon="skip-back" aria-hidden="true"></span></button>
+          <button type="button" data-aura="play" class="aura-play" aria-label="${text.play}"><span class="aura-icon" data-aura="playIcon" aria-hidden="true"></span></button>
+          <button type="button" data-aura="next" aria-label="${text.nextTrack}" title="${text.nextTrack}"><span class="aura-icon" data-icon="skip-forward" aria-hidden="true"></span></button>
+          <button type="button" data-aura="repeat" aria-pressed="false" aria-label="${text.repeatOff}" title="${text.repeatOff}"><span class="aura-icon" data-aura="repeatIcon" aria-hidden="true"></span></button>
         </div>
         <div class="aura-timeline">
           <time data-aura="elapsed">0:00</time>
-          <input class="aura-range" data-aura="seek" type="range" min="0" max="1000" value="0" aria-label="Posição na faixa" disabled>
+          <input class="aura-range" data-aura="seek" type="range" min="0" max="1000" value="0" aria-label="${text.trackPosition}" disabled>
           <time data-aura="duration">0:00</time>
         </div>
         <div class="aura-volume">
-          <button type="button" data-aura="mute" aria-pressed="false" aria-label="Silenciar" title="Silenciar"><span class="aura-icon" data-aura="muteIcon" aria-hidden="true"></span></button>
+          <button type="button" data-aura="mute" aria-pressed="false" aria-label="${text.mute}" title="${text.mute}"><span class="aura-icon" data-aura="muteIcon" aria-hidden="true"></span></button>
           <input class="aura-range" data-aura="volume" type="range" min="0" max="100" value="0" aria-label="Volume">
         </div>
         <p class="aura-player-error" data-aura="playerError" role="status"></p>
@@ -125,76 +221,76 @@
     <section id="aura-settings" class="aura-settings" data-aura="settings" aria-labelledby="aura-settings-title" hidden>
       <div class="aura-settings-card aura-glass">
         <header class="aura-settings-header">
-          <h2 id="aura-settings-title">Ajustes</h2>
-          <button type="button" data-aura="settingsBack">Voltar</button>
+          <h2 id="aura-settings-title">${text.settings}</h2>
+          <button type="button" data-aura="settingsBack">${text.back}</button>
         </header>
         <div class="aura-settings-grid">
           <fieldset>
-            <legend>Cena e cor</legend>
+            <legend>${text.sceneAndColor}</legend>
             <p data-aura="backgroundChoice"></p>
             <div class="aura-setting-options">
-              <button type="button" data-aura="chooseImage">Escolher imagem</button>
-              <button type="button" data-aura="useCover">Usar capa do álbum</button>
+              <button type="button" data-aura="chooseImage">${text.chooseImage}</button>
+              <button type="button" data-aura="useCover">${text.useAlbumCover}</button>
               <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/bmp" data-aura="file" hidden>
             </div>
-            <label class="aura-setting-slider">Escurecimento<input class="aura-range" type="range" data-aura="dim" min="0" max="80" step="1"></label>
+            <label class="aura-setting-slider">${text.dimming}<input class="aura-range" type="range" data-aura="dim" min="0" max="80" step="1"></label>
             <div class="aura-setting-options">
-              <label for="aura-color-mode">Cor de destaque</label>
+              <label for="aura-color-mode">${text.accentColor}</label>
               <select id="aura-color-mode" data-aura="colorMode">
-                <option value="album">Da capa</option>
+                <option value="album">${text.fromAlbumCover}</option>
                 <option value="manual">Manual</option>
               </select>
-              <input type="color" data-aura="accent" aria-label="Escolher cor de destaque">
+              <input type="color" data-aura="accent" aria-label="${text.chooseAccent}">
             </div>
           </fieldset>
           <fieldset>
-            <legend>Composição</legend>
-            <label class="aura-setting-slider">Profundidade 3D e brilho decorativo<input class="aura-range" type="range" data-aura="depth" min="0" max="100" step="1"></label>
-            <label class="aura-setting-slider">Tamanho do disco<input class="aura-range" type="range" data-aura="discSize" min="70" max="116" step="1"></label>
+            <legend>${text.composition}</legend>
+            <label class="aura-setting-slider">${text.depth}<input class="aura-range" type="range" data-aura="depth" min="0" max="100" step="1"></label>
+            <label class="aura-setting-slider">${text.recordSize}<input class="aura-range" type="range" data-aura="discSize" min="70" max="116" step="1"></label>
             <div class="aura-setting-toggles">
-              <label><input type="checkbox" data-aura="showClock">Relógio</label>
-              <label><input type="checkbox" data-aura="showQueue">Fila lateral</label>
-              <label><input type="checkbox" data-aura="reduceMotion">Reduzir movimento</label>
-              <label><input type="checkbox" data-aura="autoHide">Recolher controles</label>
+              <label><input type="checkbox" data-aura="showClock">${text.clock}</label>
+              <label><input type="checkbox" data-aura="showQueue">${text.sideQueue}</label>
+              <label><input type="checkbox" data-aura="reduceMotion">${text.reduceMotion}</label>
+              <label><input type="checkbox" data-aura="autoHide">${text.autoHide}</label>
             </div>
           </fieldset>
           <fieldset>
-            <legend>Letras</legend>
+            <legend>${text.lyrics}</legend>
             <div class="aura-setting-options">
-              <label for="aura-lyrics-position">Posição</label>
+              <label for="aura-lyrics-position">${text.lyricsPosition}</label>
               <select id="aura-lyrics-position" data-aura="lyricsPosition">
-                <option value="side">Painel lateral</option>
-                <option value="below">Abaixo do disco</option>
+                <option value="side">${text.sidePanel}</option>
+                <option value="below">${text.belowRecord}</option>
               </select>
             </div>
-            <label class="aura-setting-slider">Tamanho do texto<input class="aura-range" type="range" data-aura="lyricsSize" min="80" max="135" step="1"></label>
+            <label class="aura-setting-slider">${text.textSize}<input class="aura-range" type="range" data-aura="lyricsSize" min="80" max="135" step="1"></label>
             <div class="aura-setting-options">
-              <label for="aura-lyrics-offset">Atraso (ms)</label>
+              <label for="aura-lyrics-offset">${text.lyricsDelay}</label>
               <input id="aura-lyrics-offset" type="number" min="-5000" max="5000" step="100" data-aura="lyricsOffset" aria-describedby="aura-lyrics-offset-help">
-              <button type="button" data-aura="resetLyricsOffset">Zerar</button>
+              <button type="button" data-aura="resetLyricsOffset">${text.reset}</button>
             </div>
-            <p id="aura-lyrics-offset-help">Valores positivos fazem a letra aparecer mais tarde.</p>
+            <p id="aura-lyrics-offset-help">${text.lyricsOffsetHelp}</p>
           </fieldset>
           <fieldset>
-            <legend>Atalho de teclado</legend>
+            <legend>${text.keyboardShortcut}</legend>
             <div class="aura-setting-options">
-              <select data-aura="modifiers" aria-label="Teclas modificadoras">
+              <select data-aura="modifiers" aria-label="${text.modifierKeys}">
                 <option value="ctrl-alt">Ctrl + Alt</option>
                 <option value="ctrl-shift">Ctrl + Shift</option>
               </select>
               <span aria-hidden="true">+</span>
-              <select data-aura="key" aria-label="Letra do atalho"></select>
+              <select data-aura="key" aria-label="${text.shortcutLetter}"></select>
             </div>
           </fieldset>
           <fieldset>
-            <legend>Janela normal do Spotify</legend>
+            <legend>${text.spotifyWindow}</legend>
             <div class="aura-setting-toggles">
-              <label><input type="checkbox" data-aura="nativeLayout">Layout em painéis</label>
+              <label><input type="checkbox" data-aura="nativeLayout">${text.floatingPanels}</label>
             </div>
           </fieldset>
         </div>
         <footer class="aura-settings-footer">
-          <button type="button" data-aura="resetVisual">Restaurar visual do AURA</button>
+          <button type="button" data-aura="resetVisual">${text.resetVisual}</button>
           <p data-aura="settingStatus" role="status"></p>
         </footer>
       </div>
@@ -233,10 +329,10 @@
     }
   }
 
-  async function encodeBackground(file) {
-    if (file.size > MAX_IMAGE_INPUT) throw new Error("Escolha uma imagem de até 18 MiB.");
+  async function encodeBackground(file, text) {
+    if (file.size > MAX_IMAGE_INPUT) throw new Error(text.imageSizeError);
     const bitmap = await createImageBitmap(file).catch(() => {
-      throw new Error("Não foi possível abrir a imagem. Escolha um JPG, PNG, WebP, AVIF ou BMP.");
+      throw new Error(text.imageOpenError);
     });
     try {
       const scale = Math.min(1, 1440 / Math.max(bitmap.width, bitmap.height));
@@ -270,7 +366,7 @@
     return artworkUrl(item?.metadata?.image_small_url) || artworkUrl(item?.metadata?.image_url);
   }
 
-  function trackDetails(item) {
+  function trackDetails(item, text) {
     const meta = item?.metadata ?? {};
     const artists = Array.isArray(item?.artists) ? item.artists.map((artist) => artist?.name).filter(Boolean) : [];
     if (!artists.length) {
@@ -286,7 +382,7 @@
       ...(Array.isArray(item?.album?.images) ? item.album.images : []).map((image) => image?.url ?? image?.uri),
     ].map(artworkUrl).find(Boolean);
     return {
-      title: item?.name || meta.title || (item ? "Faixa sem título" : "Nenhuma faixa selecionada"),
+      title: item?.name || meta.title || (item ? text.untitledTrack : text.noSelectedTrack),
       artist: [...new Set(artists)].join(", ") || meta.album_artist_name || "",
       primaryArtist: item?.artists?.[0]?.name || meta.artist_name || artists[0] || meta.album_artist_name || "",
       album: item?.album?.name || meta.album_title || "",
@@ -382,6 +478,12 @@
   }
 
   function mount(spicetify) {
+    const locale = spicetify.Locale?.getLocale?.() || spicetify.Platform.Session?.locale ||
+      document.documentElement.lang || "pt-BR";
+    const portuguese = /^pt(?:[-_]|$)/i.test(locale);
+    const lang = portuguese ? "pt-BR" : "en";
+    const text = Object.fromEntries(Object.entries(MESSAGES).map(([key, [pt, en]]) => [key, portuguese ? pt : en]));
+    const immersiveLabel = "AURA · " + text.immersiveMode;
     const player = spicetify.Player;
     const readPlayerState = () => spicetify.Platform.PlayerAPI?.getState?.() ?? player.data;
     const trackFromState = (state) => state?.item ?? state?.track ?? null;
@@ -389,9 +491,9 @@
     const storage = spicetify.LocalStorage;
     const dialog = document.createElement("dialog");
     dialog.id = THEME_ID;
-    dialog.lang = "pt-BR";
-    dialog.setAttribute("aria-label", "Modo imersivo AURA");
-    dialog.innerHTML = layout;
+    dialog.lang = lang;
+    dialog.setAttribute("aria-label", immersiveLabel);
+    dialog.innerHTML = layout(text);
     document.body.append(dialog);
 
     const ui = Object.fromEntries([...dialog.querySelectorAll("[data-aura]")].map(
@@ -423,8 +525,8 @@
     const eventOptions = { signal: lifetime.signal };
     const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
     const stacked = matchMedia("(max-width: 50rem)");
-    const timeFormat = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-    const dateFormat = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "numeric", month: "long" });
+    const timeFormat = new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    const dateFormat = new Intl.DateTimeFormat(lang, { weekday: "short", day: "numeric", month: "long" });
     const accents = new Map();
     let prefs = loadPreferences(storage);
     let current;
@@ -485,7 +587,7 @@
       ui.seek.disabled = !current || duration <= 0;
       updateText(ui.elapsed, elapsedLabel);
       updateText(ui.duration, durationLabel);
-      paintRange(ui.seek, duration ? Math.round(elapsed / duration * 1000) : 0, elapsedLabel + " de " + durationLabel);
+      paintRange(ui.seek, duration ? Math.round(elapsed / duration * 1000) : 0, elapsedLabel + text.timeSeparator + durationLabel);
       if (lyricsView && !ui.lyrics.hidden && dialog.open && !document.hidden) {
         lyricsView.setTrack(lyricsTrack, duration);
         lyricsView.updateTime(elapsed, prefs.lyricsOffsetMs);
@@ -521,8 +623,8 @@
       const changed = playing !== shouldSpin;
       playing = shouldSpin;
       dialog.toggleAttribute("data-playing", playing);
-      updateText(ui.state, isPlaying ? (buffering ? "Carregando" : "Em reprodução") : "Em pausa");
-      const label = isPlaying ? "Pausar" : "Reproduzir";
+      updateText(ui.state, isPlaying ? (buffering ? text.buffering : text.playing) : text.paused);
+      const label = isPlaying ? text.pause : text.play;
       if (ui.play.title !== label) {
         ui.play.setAttribute("aria-label", label);
         ui.play.title = label;
@@ -566,7 +668,7 @@
       if (!ui.shuffle.hidden) ui.shuffle.setAttribute("aria-pressed", String(Boolean(state && player.getShuffle())));
       if (!ui.repeat.hidden) {
         const repeat = state && player.getRepeat();
-        const label = repeat === 2 ? "Repetir faixa" : repeat === 1 ? "Repetir fila" : "Repetição desligada";
+        const label = repeat === 2 ? text.repeatTrack : repeat === 1 ? text.repeatQueue : text.repeatOff;
         ui.repeat.setAttribute("aria-pressed", String(repeat === 1 || repeat === 2));
         ui.repeat.setAttribute("aria-label", label);
         ui.repeat.title = label;
@@ -574,7 +676,7 @@
       }
       if (!ui.like.hidden) {
         const liked = Boolean(current && player.getHeart());
-        const label = liked ? "Remover das músicas curtidas" : "Curtir faixa";
+        const label = liked ? text.unlikeTrack : text.likeTrack;
         ui.like.setAttribute("aria-pressed", String(liked));
         ui.like.setAttribute("aria-label", label);
         ui.like.title = label;
@@ -582,7 +684,7 @@
       }
       if (!ui.mute.hidden) {
         const muted = Boolean(player.getMute());
-        const label = muted ? "Reativar som" : "Silenciar";
+        const label = muted ? text.unmute : text.mute;
         ui.mute.setAttribute("aria-pressed", String(muted));
         ui.mute.setAttribute("aria-label", label);
         ui.mute.title = label;
@@ -597,7 +699,7 @@
       ).map((item) => {
         const occurrence = (occurrences.get(item.uri) ?? 0) + 1;
         occurrences.set(item.uri, occurrence);
-        return { key: item.uid || item.uri + "#" + occurrence, ...trackDetails(item) };
+        return { key: item.uid || item.uri + "#" + occurrence, ...trackDetails(item, text) };
       });
     }
 
@@ -607,7 +709,7 @@
       const manual = queueTracks(queue?.manual ?? []);
       const next = queueTracks(queue?.next ?? []);
       const status = manual.length || next.length ? "" :
-        queue ? "Nenhuma próxima faixa na fila." : "A fila está indisponível.";
+        queue ? text.emptyQueue : text.queueUnavailable;
       const manualSignature = JSON.stringify(manual);
       const nextSignature = JSON.stringify(next);
       if (queueSnapshot?.status === status && queueSnapshot.manual === manualSignature &&
@@ -662,10 +764,10 @@
       const changedTrack = current?.uri !== track?.uri;
       const animateTrack = Boolean(changedTrack && current && track && ui.settings.hidden);
       current = track;
-      const { title, artist, album, artwork, primaryArtist } = trackDetails(current);
+      const { title, artist, album, artwork, primaryArtist } = trackDetails(current, text);
       lyricsTrack = current ? { uri: current.uri, title: current.name || current.metadata?.title || "", artist, primaryArtist, album } : null;
       updateText(ui.title, title);
-      updateText(ui.dockTitle, current ? title : "Nenhuma faixa");
+      updateText(ui.dockTitle, current ? title : text.noTrack);
       updateText(ui.artist, artist);
       updateText(ui.dockArtist, artist);
       updateText(ui.album, album);
@@ -782,7 +884,7 @@
       ui.key.value = prefs.key;
       ui.lyricsOffset.value = prefs.lyricsOffsetMs;
       ui.resetLyricsOffset.disabled = prefs.lyricsOffsetMs === 0;
-      ui.backgroundChoice.textContent = prefs.background ? "Imagem local em uso" : "Capa do álbum em uso";
+      ui.backgroundChoice.textContent = prefs.background ? text.localImageActive : text.albumCoverActive;
       ui.useCover.disabled = !prefs.background;
       ui.colorMode.value = prefs.colorMode;
       ui.accent.value = prefs.accent;
@@ -798,7 +900,7 @@
       syncClock();
       if (playbarButton) {
         const label = (prefs.modifiers === "ctrl-shift" ? "Ctrl+Shift+" : "Ctrl+Alt+") + prefs.key;
-        playbarButton.label = "AURA · Modo imersivo (" + label + ")";
+        playbarButton.label = immersiveLabel + " (" + label + ")";
         playbarButton.element.setAttribute("aria-keyshortcuts", label.replace("Ctrl", "Control"));
       }
     }
@@ -810,7 +912,7 @@
         prefs = next;
         ui.settingStatus.textContent = "";
       } catch {
-        ui.settingStatus.textContent = "Não foi possível salvar os ajustes no Spotify.";
+        ui.settingStatus.textContent = text.saveError;
       }
       syncSettings();
       syncBackground();
@@ -838,13 +940,13 @@
       }
       const status = ui.lyrics.querySelector('[data-lyrics="status"]');
       status.hidden = false;
-      status.textContent = "Carregando letras…";
+      status.textContent = text.loadingLyrics;
       lyricsModule ??= import("./node_modules/aura-lyrics/view.mjs").then(({ createLyricsView }) => {
         if (lifetime.signal.aborted) return;
-        lyricsView = createLyricsView(ui.lyrics, lifetime.signal, () => prefs.reduceMotion);
+        lyricsView = createLyricsView(ui.lyrics, lifetime.signal, () => prefs.reduceMotion, text);
         if (!ui.lyrics.hidden && dialog.open) paintProgress();
       }).catch(() => {
-        status.textContent = "O módulo de letras não pôde ser carregado.";
+        status.textContent = text.lyricsModuleError;
         lyricsModule = undefined;
       });
     }
@@ -901,7 +1003,7 @@
         return;
       }
       if (getComputedStyle(dialog).getPropertyValue("--aura-theme").trim() !== "1") {
-        spicetify.showNotification("Ative o tema AURA para abrir o modo imersivo.", true);
+        spicetify.showNotification(text.themeRequired, true);
         return;
       }
       dialog.showModal();
@@ -938,7 +1040,7 @@
         await action();
         syncProgress(true);
       } catch {
-        if (dialog.open) updateText(ui.playerError, "O Spotify não conseguiu executar esse controle.");
+        if (dialog.open) updateText(ui.playerError, text.playerError);
       }
     }
 
@@ -998,7 +1100,7 @@
       try {
         navigateNative(spicetify, target, query);
       } catch {
-        spicetify.showNotification("Abra a Biblioteca ou a Busca pelos controles do Spotify.", true);
+        spicetify.showNotification(text.navigationError, true);
       }
     }
     ui.library.addEventListener("click", () => openNative("library"), eventOptions);
@@ -1042,12 +1144,12 @@
       if (!file) return;
       const request = ++imageRequest;
       ui.chooseImage.disabled = true;
-      ui.settingStatus.textContent = "Preparando imagem…";
+      ui.settingStatus.textContent = text.preparingImage;
       try {
-        const background = await encodeBackground(file);
+        const background = await encodeBackground(file, text);
         if (request !== imageRequest) return;
         if (!validatePreferences({ ...prefs, background }).background) {
-          throw new Error("A imagem ficou grande demais. Escolha uma imagem menor.");
+          throw new Error(text.imageStillTooLarge);
         }
         savePreferences({ background });
       } catch (error) {
@@ -1093,15 +1195,14 @@
     window.addEventListener("keydown", keyDown, { ...eventOptions, capture: true });
     document.addEventListener("visibilitychange", observePlayer, eventOptions);
 
-    const label = "AURA · Modo imersivo";
     try {
-      if (spicetify.Playbar?.Button) playbarButton = new spicetify.Playbar.Button(label, "album", toggleView, false, false, true);
+      if (spicetify.Playbar?.Button) playbarButton = new spicetify.Playbar.Button(immersiveLabel, "album", toggleView, false, false, true);
     } catch (error) {
       console.warn("[AURA] Botão da barra indisponível.", error);
     }
     const fallbackTimer = setTimeout(() => {
       if (playbarButton?.element?.isConnected || !spicetify.Menu?.Item) return;
-      profileItem = new spicetify.Menu.Item(label, false, toggleView, "album");
+      profileItem = new spicetify.Menu.Item(immersiveLabel, false, toggleView, "album");
       profileItem.register();
     }, playbarButton ? 2000 : 0);
     syncSettings();
@@ -1118,14 +1219,15 @@
       nativeLayout = createNativeLayout({
         spicetify,
         signal: lifetime.signal,
+        layoutLabel: "AURA · " + text.floatingPanels,
         preferences: () => prefs,
         setLayout: (enabled) => savePreferences({ nativeLayout: enabled }),
-        getBackdrop: () => prefs.background || trackDetails(trackFromState(readPlayerState())).artwork,
+        getBackdrop: () => prefs.background || trackDetails(trackFromState(readPlayerState()), text).artwork,
         accentForArtwork,
         getTrack: () => {
           const track = trackFromState(readPlayerState());
           if (!track) return null;
-          return { uri: track.uri, artwork: thumbnailArtwork(track) || trackDetails(track).artwork };
+          return { uri: track.uri, artwork: thumbnailArtwork(track) || trackDetails(track, text).artwork };
         },
       });
     }).catch((error) => console.warn("[AURA] Layout da janela normal indisponível.", error));
