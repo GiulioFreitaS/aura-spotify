@@ -8,15 +8,21 @@
 
 ## Demo
 
-[![AURA in immersive mode with a vinyl record, a playback queue, and floating controls](docs/media/aura-imersivo.jpg)](docs/media/aura-demo.mp4)
+### Immersive player and queue
 
-[Watch the original recording · 53 s](docs/media/aura-demo.mp4)
+![AURA in immersive mode with a vinyl record, a playback queue, and floating controls](docs/media/aura-imersivo.png)
+
+### Desktop layout
+
+![Spotify arranged in three floating panels, with navigation at the top and a floating player at the bottom](docs/media/aura-paineis.png)
+
+### Immersive lyrics
+
+![Lyrics in the side panel next to the vinyl record](docs/media/aura-letras.png)
 
 ## Features
 
 ### Desktop layout
-
-![Spotify arranged in three floating panels, with navigation at the top and a floating player at the bottom](docs/media/aura-paineis.jpg)
 
 - **Three floating panels with perspective** for your library, browsing, and the current track, plus a floating navigation bar and player.
 - **Album-based lighting** along the panel edges, navigation bar, and player. The light changes with the current track and also works with custom wallpaper.

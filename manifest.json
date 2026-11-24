@@ -1,7 +1,7 @@
 {
   "name": "AURA",
   "description": "Floating Spotify panels and an immersive vinyl player with a live queue and lyrics.",
-  "preview": "docs/media/aura-imersivo.jpg",
+  "preview": "docs/media/aura-imersivo.png",
   "readme": "README.en.md",
   "usercss": "Themes/AURA/user.css",
   "schemes": "Themes/AURA/color.ini",

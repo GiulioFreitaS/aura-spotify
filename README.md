@@ -8,15 +8,21 @@
 
 ## Demonstração
 
-[![Modo imersivo do AURA com disco, fila de reprodução e player flutuante](docs/media/aura-imersivo.jpg)](docs/media/aura-demo.mp4)
+### Modo imersivo com fila
 
-[Assistir à gravação original · 53 s](docs/media/aura-demo.mp4)
+![Modo imersivo do AURA com disco, fila de reprodução e player flutuante](docs/media/aura-imersivo.png)
+
+### Janela do Spotify
+
+![Janela normal do Spotify com navegação em ilha, três painéis e player flutuante](docs/media/aura-paineis.png)
+
+### Letras no modo imersivo
+
+![Letras no painel lateral ao lado do disco de vinil](docs/media/aura-letras.png)
 
 ## Recursos
 
 ### Janela do Spotify
-
-![Janela normal do Spotify com navegação em ilha, três painéis e player flutuante](docs/media/aura-paineis.jpg)
 
 - **Três painéis em perspectiva** para biblioteca, conteúdo e faixa atual, com uma ilha de navegação e um player flutuante.
 - **Iluminação por álbum** nas bordas, na ilha e no player. A cor acompanha a faixa em reprodução, inclusive com um papel de parede personalizado.
