@@ -1002,8 +1002,6 @@ html[data-aura-native] .Root__nav-bar .main-yourLibraryX-listItem {
   border-radius: 10px;
 }
 
-html[data-aura-native][data-aura-cutouts] .aura-native-background { display: none; }
-html[data-aura-native][data-aura-cutouts] { --aura-normal-glass: #211d28; }
 
 @media (prefers-reduced-motion: no-preference) {
   html[data-aura-native-motion] { --aura-normal-ease: cubic-bezier(.22, .65, .32, 1); }

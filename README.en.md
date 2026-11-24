@@ -2,7 +2,7 @@
 
 [Português](README.md) · **English**
 
-**A Spicetify theme and extension for Spotify on Windows.** AURA gives the library, browsing view, and Now Playing panel their own floating surfaces. Immersive mode turns the album cover into a spinning record.
+**A Spicetify theme and extension for Spotify on Windows, Linux, and macOS.** AURA gives the library, browsing view, and Now Playing panel their own floating surfaces. Immersive mode turns the album cover into a spinning record.
 
 [Demo](#demo) · [Installation](#installation) · [Spotify updates](#spotify-updates) · [Using AURA](#using-aura) · [Development](#development)
 
@@ -21,7 +21,7 @@
 - **Three floating panels with perspective** for your library, browsing, and the current track, plus a floating navigation bar and player.
 - **Album-based lighting** along the panel edges, navigation bar, and player. The light changes with the current track and also works with custom wallpaper.
 - **Animations across pages, menus, cards, and controls.** Start a track from a card to see its cover travel toward Now Playing or the player bar. Open an album to see its artwork expand into the header and return to the original card when that card is visible.
-- **Two background modes.** Wallpaper uses your chosen image or the current album cover. Live desktop shows your desktop and other apps in the gaps between panels.
+- **Customizable wallpaper.** AURA uses the album cover by default. To match your system wallpaper, select the image file in the immersive settings. The same background fills the space behind the floating panels.
 
 ### Immersive mode
 
@@ -32,19 +32,27 @@
 
 ## Installation
 
-### Tested versions
+### Install from Marketplace
 
-| Component | Version or purpose |
+1. Install Spicetify and Marketplace using the official guide.
+2. In Spotify, open **Marketplace → Themes** and search for **AURA**.
+3. Install the theme and restart Spotify if prompted. AURA loads its immersive player, queue, and lyrics with the theme.
+
+[Set up Spicetify and Marketplace](https://spicetify.app/docs/getting-started)
+
+### Compatibility
+
+| Platform | Spotify versions supported by Spicetify 2.46.7 |
 | --- | --- |
-| Spotify for Windows | **1.3.9.2055**, from the desktop installer |
-| Spicetify | **2.46.7** |
-| PowerShell | PowerShell 7 recommended for AURA's Windows scripts. |
-| Python 3 | Optional for Live desktop. The helper uses the `py.exe` launcher. |
-| Node.js | Optional for running project checks. |
+| Windows | 1.2.14 through 1.3.9 |
+| Linux | 1.2.14 through 1.3.8 |
+| macOS | 1.2.14 through 1.3.9 |
 
-Spicetify 2.46.7 lists Windows compatibility through Spotify **1.3.9**. Check both versions before applying the theme. [Spicetify release notes](https://github.com/spicetify/cli/releases/tag/v2.46.7)
+AURA's Spotify desktop test reference is **1.3.9.2055 on Windows**. The repository checks exercise the package and UI in Chromium on Windows, Linux, and macOS. [Spicetify 2.46.7 release notes](https://github.com/spicetify/cli/releases/tag/v2.46.7)
 
-### 1. Set up Spotify and get AURA
+### Manual installation on Windows
+
+#### 1. Set up Spotify and get AURA
 
 Open Spotify and sign in. Install Spicetify using its Windows guide, then reopen PowerShell so the command is available. [Install Spicetify on Windows](https://spicetify.app/docs/getting-started#windows)
 
@@ -65,7 +73,7 @@ spicetify
 spicetify backup
 ```
 
-### 2. Apply AURA
+#### 2. Apply AURA
 
 Run this block from the project folder. It saves your previous configuration to a dated file. Keep the path it prints so you can restore that configuration later.
 
@@ -118,19 +126,11 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not apply AURA to Spotify.' }
 
 </details>
 
-### 3. Enable Live desktop (optional)
-
-Install Python 3 with the `py.exe` launcher. Close Spotify, then run the launcher from the AURA folder to start Spotify and the local helper.
-
-```powershell
-.\Windows\Iniciar-AURA.ps1
-```
-
-In immersive mode, choose **Ajustes → Janela normal do Spotify → Fundo da janela → Desktop ao vivo**. When the helper is off, AURA's background fills the gaps between panels. [Windows window regions](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowrgn)
-
 ## Spotify updates
 
-The desktop client can update itself on the next launch and replace the files that load Spicetify. To keep Spotify at **1.3.9.2055**, run this command in PowerShell from the AURA folder.
+After updating Spotify, check version compatibility and reapply Spicetify. [Updating Spicetify](https://spicetify.app/docs/getting-started#updating)
+
+On Windows, the desktop client can update itself on launch and replace the files that load Spicetify. To keep Spotify at **1.3.9.2055**, run this command in PowerShell from the AURA folder.
 
 ```powershell
 .\Windows\Atualizacoes-AURA.ps1 block
@@ -142,7 +142,7 @@ The block uses local permissions on `%LOCALAPPDATA%\Spotify\Update`. It applies 
 | --- | --- |
 | Check whether updates are blocked | `.\Windows\Atualizacoes-AURA.ps1 status` |
 | Allow automatic updates again | `.\Windows\Atualizacoes-AURA.ps1 unblock` |
-| Block updates and start AURA with its helper | `.\Windows\Iniciar-AURA.ps1 -BloquearAtualizacoes` |
+| Block updates and start Spotify | `.\Windows\Iniciar-AURA.ps1 -BloquearAtualizacoes` |
 
 ### If Spotify returns to its default layout
 
@@ -152,7 +152,7 @@ If Spotify already updated, restore desktop version **1.3.9.2055** and block upd
 .\Windows\Iniciar-AURA.ps1 -BloquearAtualizacoes -Reaplicar
 ```
 
-To use the theme and immersive mode on their own, run `spicetify apply` after blocking updates and closing Spotify.
+To reapply a manual installation, run `spicetify apply` after blocking updates and closing Spotify.
 
 ## Using AURA
 
@@ -160,25 +160,28 @@ AURA's interface uses Portuguese labels. The table shows the exact settings and 
 
 | Action | Where to find it |
 | --- | --- |
-| Open immersive mode | Press **Ctrl + Alt + A**, or click the record icon in the player bar. The profile menu may also show **AURA · Modo imersivo**. |
+| Open immersive mode | Press **Ctrl + Alt + A** (Control + Option + A on macOS), or click the record icon in the player bar. The profile menu may also show **AURA · Modo imersivo**. |
 | Return to Spotify | Press **Esc** or select **Sair**. From settings, the first **Esc** returns to immersive mode. |
 | Toggle the floating panels | Use the AURA icon in the navigation bar or **AURA · Layout em painéis** in the profile menu. |
 | Change the background | Open **Ajustes** in immersive mode to choose an image or switch back to album artwork. |
 | Show lyrics | Select **Letras** in the side menu. Use **Ajustes → Letras** to change the placement or adjust the timing. |
-| Reduce animations | Open **Ajustes → Reduzir movimento**. AURA also respects your Windows motion preferences. |
+| Reduce animations | Open **Ajustes → Reduzir movimento**. AURA also respects your system's reduced-motion preference. |
 
 While showing lyrics, AURA queries LRCLIB with the track title, artist, album, and duration. Playback position drives the highlighting when timing data is available. You can shift the lyrics up to five seconds in either direction. [Lyricsfile format](https://github.com/tranxuanthang/lyricsfile/blob/main/SPECIFICATION.md)
 
 ## Updating
 
-Back up your current files, then update `Themes\AURA\user.css`, `Extensions\aura.js`, and the `aura-lyrics` and `aura-native` modules under `Extensions\node_modules` in your Spicetify data folder. Keep `bridge-config.mjs` if the local helper has created it. Run `spicetify apply` to load the update. [Spicetify JavaScript modules](https://spicetify.app/docs/development/js-modules)
+For Marketplace installs, use **Installed** to apply updates when they become available.
+
+For a manual install on Windows, back up your current files, then update `Themes\AURA\user.css`, `Extensions\aura.js`, and the `aura-lyrics` and `aura-native` modules under `Extensions\node_modules` in your Spicetify data folder. Run `spicetify apply` to load the update. [Spicetify JavaScript modules](https://spicetify.app/docs/development/js-modules)
 
 ## Restoring your previous setup
 
-If you use the local window helper, stop it before restoring. In a new PowerShell session, set `$auraBackup` to the path printed during installation.
+For Marketplace installs, remove AURA under **Installed**.
+
+For a manual install on Windows, set `$auraBackup` to the path printed during installation.
 
 ```powershell
-.\Windows\Iniciar-AURA.ps1 -Parar
 Copy-Item -LiteralPath $auraBackup -Destination (spicetify -c).Trim() -Force -ErrorAction Stop
 ```
 
@@ -192,17 +195,22 @@ To allow future Spotify updates, run `.\Windows\Atualizacoes-AURA.ps1 unblock`.
 | --- | --- |
 | [Themes/AURA](Themes/AURA) | Theme styles and colors |
 | [Extensions](Extensions) | Player integration, animations, and lyrics |
-| [Windows](Windows) | Launcher, live desktop helper, and update protection |
-| [tests](tests) | Lyrics parsing, timing, and lookup tests |
+| [Windows](Windows) | Launcher and Spotify version protection for Windows |
+| [tests](tests) | Lyrics and Marketplace UI tests |
 
-Run the checks from the project root.
+The root manifest points to the theme, palette, preview, and bundled script that GitHub Pages serves to Marketplace.
 
-```powershell
-node --check .\Extensions\aura.js
-node --test .\tests\lyrics.test.mjs
+Run the checks from the project root with Node.js 22 or later.
+
+```sh
+npm ci
+npm test
+npm run build:marketplace
+npx playwright install chromium
+npm run test:marketplace
 ```
 
-To test in Spotify, open an album and use the Back button in the floating navigation bar. Change tracks, pause, and check the record and queue. Switch between both backgrounds and test **Alt + Tab**. See the [decision log in Portuguese](docs/DECISOES.md) for implementation details.
+In Spotify, change tracks and check the record, queue, and lyrics. Pick a local image and switch back to the album cover. See the [Portuguese decision log](docs/DECISOES.md).
 
 ## Credits
 

@@ -1,0 +1,22 @@
+{
+  "name": "AURA",
+  "description": "Floating Spotify panels and an immersive vinyl player with a live queue and lyrics.",
+  "preview": "docs/media/aura-imersivo.jpg",
+  "readme": "README.en.md",
+  "usercss": "Themes/AURA/user.css",
+  "schemes": "Themes/AURA/color.ini",
+  "include": [
+    "https://giuliofreitas.github.io/aura-spotify/aura.js"
+  ],
+  "authors": [
+    {
+      "name": "GiulioFreitaS",
+      "url": "https://github.com/GiulioFreitaS"
+    }
+  ],
+  "tags": [
+    "dark",
+    "immersive",
+    "vinyl"
+  ]
+}

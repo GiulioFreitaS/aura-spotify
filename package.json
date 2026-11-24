@@ -1,0 +1,17 @@
+{
+  "name": "aura-spotify",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build:marketplace": "node scripts/build-marketplace.mjs",
+    "test": "node --check Extensions/aura.js && node --test tests/lyrics.test.mjs",
+    "test:marketplace": "node --test tests/marketplace.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.65.1"
+  }
+}
