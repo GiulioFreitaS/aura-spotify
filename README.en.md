@@ -1,6 +1,6 @@
 # AURA
 
-[Português](README.md) · **English**
+[Português](README.md) · **English** · [Türkçe](README.tr.md)
 
 **A Spicetify theme and extension for Spotify on Windows, Linux, and macOS.** AURA gives the library, browsing view, and Now Playing panel their own floating surfaces. Immersive mode turns the album cover into a spinning record.
 
@@ -173,7 +173,7 @@ AURA's interface uses Portuguese labels. The table shows the exact settings and 
 | Show lyrics | Select **Lyrics** in the side menu. Use **Settings → Lyrics** to change the placement or adjust the timing. |
 | Reduce animations | Open **Settings → Reduce motion**. AURA also respects your system's reduced-motion preference. |
 
-AURA reads Spotify's language when it opens. The interface is available in English and Portuguese, with English used for other Spotify languages.
+AURA reads Spotify's language when it opens. The interface is available in English, Portuguese, and Turkish, with English used for other Spotify languages.
 
 While showing lyrics, AURA queries LRCLIB with the track title, artist, album, and duration. Playback position drives the highlighting when timing data is available. You can shift the lyrics up to five seconds in either direction. [Lyricsfile format](https://github.com/tranxuanthang/lyricsfile/blob/main/SPECIFICATION.md)
 

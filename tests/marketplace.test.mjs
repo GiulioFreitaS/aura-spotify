@@ -64,7 +64,7 @@ async function exerciseBundle(t, locale, labels) {
     })]]);
     document.documentElement.lang = "en";
     globalThis.Spicetify = {
-      Locale: locale === "en-GB" ? { getLocale: () => locale } : undefined,
+      Locale: locale !== "pt-BR" ? { getLocale: () => locale } : undefined,
       Player: {
         data: {
           item: track,
@@ -151,5 +151,13 @@ test("o idioma inglês do Spotify prevalece nos painéis, nos ajustes e nos esta
     lang: "en", upNext: "Up next", playing: "Playing", lineSynced: "Line synced",
     settings: "Settings", chooseImage: "Choose image", useAlbumCover: "Use album cover",
     localImage: "Using a local image",
+  });
+});
+
+test("o idioma turco do Spotify prevalece nos painéis, nos ajustes e nos estados do player", { timeout: 40_000 }, (t) => {
+  return exerciseBundle(t, "tr", {
+    lang: "tr-TR", upNext: "Sıradakiler", playing: "Çalıyor", lineSynced: "Satır satır eşzamanlı",
+    settings: "Ayarlar", chooseImage: "Görsel seç", useAlbumCover: "Albüm kapağını kullan",
+    localImage: "Yerel görsel kullanılıyor",
   });
 });

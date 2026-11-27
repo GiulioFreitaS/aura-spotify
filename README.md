@@ -1,6 +1,6 @@
 # AURA
 
-**Português** · [English](README.en.md)
+**Português** · [English](README.en.md) · [Türkçe](README.tr.md)
 
 **Tema e extensão para o Spotify desktop no Windows, Linux e macOS.** AURA coloca a biblioteca, a navegação e a reprodução em painéis flutuantes. O modo imersivo leva a capa para um vinil que gira junto com a música.
 
@@ -171,7 +171,7 @@ Para reaplicar o AURA instalado manualmente, execute `spicetify apply` depois de
 | Mostrar letras | **Letras** no menu lateral. Use **Ajustes → Letras** para mudar a posição ou corrigir a sincronia. |
 | Reduzir as animações | **Ajustes → Reduzir movimento**. O AURA também respeita a preferência de movimento reduzido do sistema. |
 
-O AURA lê o idioma do Spotify ao abrir. A interface está disponível em português e inglês. Para outros idiomas do Spotify, o AURA usa inglês.
+O AURA lê o idioma do Spotify ao abrir. A interface está disponível em português, inglês e turco. Para outros idiomas do Spotify, o AURA usa inglês.
 
 O AURA consulta o LRCLIB ao exibir letras, usando título, artista, álbum e duração. A posição da música controla o destaque quando o resultado tem marcações de tempo. O atraso manual aceita até cinco segundos em cada direção. [Formato Lyricsfile](https://github.com/tranxuanthang/lyricsfile/blob/main/SPECIFICATION.md)
 

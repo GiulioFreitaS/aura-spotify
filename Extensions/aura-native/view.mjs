@@ -26,7 +26,7 @@ const PLAY_CONTROL = [
   ".main-trackList-rowImagePlayButton", ".main-playButton-PlayButton button",
   "[data-testid='play-button']", "[data-testid='control-button-playpause']", "[data-testid^='control-button-skip-']",
 ].join(",");
-const PRIMARY_FILTER = /^(playlists|álbuns|albums)$/i;
+const PRIMARY_FILTER = /^(playlists|álbuns|albums|çalma listeleri|albümler)$/i;
 const LAYOUT_NODES = [...Object.values(PANELS), LIBRARY, OVERLAYS, POPOVERS].join(",");
 
 function visible(element) {
