@@ -94,12 +94,18 @@ async function exerciseBundle(t, locale, labels) {
   await page.locator("#aura-immersive").waitFor({ state: "attached" });
   await page.locator(".aura-native-background").waitFor({ state: "attached" });
   assert.equal(await page.locator("html[data-aura-native]").count(), 0);
-  await page.locator("#main").evaluate((main) => {
+  await page.locator("#main").evaluate((main, expandLibrary) => {
     main.innerHTML = '<div class="Root__top-container"><header class="Root__globalNav"></header>' +
-      '<aside id="Desktop_LeftSidebar_Id" class="Root__nav-bar"></aside><article class="Root__main-view"></article>' +
+      '<aside id="Desktop_LeftSidebar_Id" class="Root__nav-bar"><div class="main-yourLibraryX-library">' +
+      '<button type="button" data-testid="expand-library" aria-expanded="false"></button></div></aside>' +
+      '<article class="Root__main-view"></article>' +
       '<aside class="Root__right-sidebar"></aside><footer class="Root__now-playing-bar"></footer></div>';
-  });
+    const toggle = main.querySelector('[data-testid="expand-library"]');
+    toggle.setAttribute("aria-label", expandLibrary);
+    toggle.addEventListener("click", () => toggle.setAttribute("aria-expanded", "true"));
+  }, labels.expandLibrary);
   await page.locator("html[data-aura-native]").waitFor();
+  await page.locator('[data-testid="expand-library"][aria-expanded="true"]').waitFor({ state: "attached" });
   await page.locator(".aura-native-background img:not([hidden])").waitFor();
   assert.equal(await page.locator(".aura-native-background img").getAttribute("src"), albumArt);
 
@@ -142,7 +148,7 @@ test("os painéis, o modo imersivo e os ajustes usam o português da sessão do 
   return exerciseBundle(t, "pt-BR", {
     lang: "pt-BR", upNext: "A seguir", playing: "Em reprodução", lineSynced: "Por linha",
     settings: "Ajustes", chooseImage: "Escolher imagem", useAlbumCover: "Usar capa do álbum",
-    localImage: "Imagem local em uso",
+    localImage: "Imagem local em uso", expandLibrary: "Abrir Sua Biblioteca",
   });
 });
 
@@ -150,7 +156,7 @@ test("o idioma inglês do Spotify prevalece nos painéis, nos ajustes e nos esta
   return exerciseBundle(t, "en-GB", {
     lang: "en", upNext: "Up next", playing: "Playing", lineSynced: "Line synced",
     settings: "Settings", chooseImage: "Choose image", useAlbumCover: "Use album cover",
-    localImage: "Using a local image",
+    localImage: "Using a local image", expandLibrary: "Open Your Library",
   });
 });
 
@@ -158,6 +164,6 @@ test("o idioma turco do Spotify prevalece nos painéis, nos ajustes e nos estado
   return exerciseBundle(t, "tr", {
     lang: "tr-TR", upNext: "Sıradakiler", playing: "Çalıyor", lineSynced: "Satır satır eşzamanlı",
     settings: "Ayarlar", chooseImage: "Görsel seç", useAlbumCover: "Albüm kapağını kullan",
-    localImage: "Yerel görsel kullanılıyor",
+    localImage: "Yerel görsel kullanılıyor", expandLibrary: "Kitaplığın'ı aç",
   });
 });

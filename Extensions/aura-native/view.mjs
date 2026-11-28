@@ -215,7 +215,7 @@ export function createNativeLayout({
         if (!ROOT.hasAttribute("data-aura-native")) return;
         attemptedExpansion = true;
         const expand = [...(panels.left?.querySelectorAll("button[aria-label]") ?? [])].find((node) =>
-          /^(Abrir Sua Biblioteca|Open Your Library|Expand Your Library)$/i.test(node.getAttribute("aria-label")),
+          /^(Abrir Sua Biblioteca|Open Your Library|Expand Your Library|Kitaplığın'ı (?:aç|genişlet))$/i.test(node.getAttribute("aria-label")),
         );
         expand?.click();
       }, 850);
